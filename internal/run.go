@@ -170,7 +170,10 @@ var runCmd = &cobra.Command{
         exists, _ := containerEngine.ImageExists(cmd.Context(), imageRef)
         if !exists {
             fmt.Fprintf(os.Stderr, "Image not found locally, pulling %s...\n", imageRef)
-            containerEngine.PullImage(cmd.Context(), imageRef)
+			if err := containerEngine.PullImage(cmd.Context(), imageRef); err != nil {
+                fmt.Fprintf(os.Stderr, "Error: Failed to pull image: %v\n", err)
+                os.Exit(1)
+            }
         }
 
         versionStr := releaseSpec.VersionTag
