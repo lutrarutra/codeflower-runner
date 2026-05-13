@@ -1,0 +1,9 @@
+package: backend
+output: internal/backend/client.gen.go
+generate:
+  models: true
+  client: true
+import-mapping:
+  nullable: true 
+compatibility:
+  old-aliasing: true
