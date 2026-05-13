@@ -7,8 +7,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-    Use:   "codeflower-runner",
+    Use:   "codeflower",
     Short: "CLI runner for Code Flower",
+	Version: "0.1.0",
 }
 
 func Execute() {

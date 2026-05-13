@@ -652,6 +652,13 @@ type CommandSearchSchema struct {
 	ToolRelease ReleaseSearchSchema `json:"tool_release"`
 }
 
+// CommandSpecSchema defines model for CommandSpecSchema.
+type CommandSpecSchema struct {
+	Description *string                    `json:"description"`
+	Name        string                     `json:"name"`
+	Variants    []CommandVariantSpecSchema `json:"variants"`
+}
+
 // CommandToolNodeSchema defines model for CommandToolNodeSchema.
 type CommandToolNodeSchema struct {
 	Id   openapi_types.UUID `json:"id"`
@@ -691,6 +698,13 @@ type CommandVariantSearchSchema struct {
 	Id        openapi_types.UUID  `json:"id"`
 	InvokeCmd string              `json:"invoke_cmd"`
 	Name      string              `json:"name"`
+}
+
+// CommandVariantSpecSchema defines model for CommandVariantSpecSchema.
+type CommandVariantSpecSchema struct {
+	InvokeCmd  string            `json:"invoke_cmd"`
+	Name       string            `json:"name"`
+	Parameters []ParamSpecSchema `json:"parameters"`
 }
 
 // CreateAPITokenForm defines model for CreateAPITokenForm.
@@ -942,6 +956,23 @@ type ParamSpecNodeSchema struct {
 	Type       ParameterType      `json:"type"`
 }
 
+// ParamSpecSchema defines model for ParamSpecSchema.
+type ParamSpecSchema struct {
+	AllowedValues *[]interface{}          `json:"allowed_values"`
+	DefaultValue  *map[string]interface{} `json:"default_value"`
+	Description   *string                 `json:"description"`
+	IsArray       bool                    `json:"is_array"`
+	IsRequired    bool                    `json:"is_required"`
+	ItemSeparator *string                 `json:"item_separator"`
+	MaxValue      *float32                `json:"max_value"`
+	MinValue      *float32                `json:"min_value"`
+	Name          string                  `json:"name"`
+	Position      *int                    `json:"position"`
+	Prefix        *string                 `json:"prefix"`
+	Separate      bool                    `json:"separate"`
+	Type          ParameterType           `json:"type"`
+}
+
 // ParameterType defines model for ParameterType.
 type ParameterType string
 
@@ -972,7 +1003,8 @@ type PricingRateResponse struct {
 
 // RegistryImagePullResponse defines model for RegistryImagePullResponse.
 type RegistryImagePullResponse struct {
-	ImageRef string `json:"image_ref"`
+	ImageRef    string                `json:"image_ref"`
+	ReleaseSpec ToolReleaseSpecSchema `json:"release_spec"`
 }
 
 // ReleaseSearchSchema defines model for ReleaseSearchSchema.
@@ -1054,6 +1086,13 @@ type ToolReleaseNodeSchema struct {
 	IsLatest   bool                  `json:"is_latest"`
 	Tool       CommandToolNodeSchema `json:"tool"`
 	VersionTag string                `json:"version_tag"`
+}
+
+// ToolReleaseSpecSchema defines model for ToolReleaseSpecSchema.
+type ToolReleaseSpecSchema struct {
+	Commands   []CommandSpecSchema `json:"commands"`
+	IsLatest   bool                `json:"is_latest"`
+	VersionTag string              `json:"version_tag"`
 }
 
 // ToolSchema defines model for ToolSchema.

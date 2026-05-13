@@ -7,5 +7,5 @@ import (
 type ContainerEngine interface {
     PullImage(ctx context.Context, imageRef string) error
 	ImageExists(ctx context.Context, imageRef string) (bool, error)
-	RunContainer(ctx context.Context, imageRef string, entrypoint []string, cmd []string) error
+	RunContainer(ctx context.Context, imageRef string, entrypoint []string, cmd []string, binds []string) error
 }

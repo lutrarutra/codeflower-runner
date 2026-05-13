@@ -22,7 +22,6 @@ func NewDockerEngine() (*DockerEngine, error) {
     if err != nil {
         return nil, fmt.Errorf("failed to create docker client: %w", err)
     }
-
     return &DockerEngine{cli: cli}, nil
 }
 
@@ -34,12 +33,7 @@ func (d *DockerEngine) PullImage(ctx context.Context, imageRef string) error {
     defer pullStream.Close()
 
     termFd, isTerm := term.GetFdInfo(os.Stdout)
-    err = jsonmessage.DisplayJSONMessagesStream(pullStream, os.Stdout, termFd, isTerm, nil)
-    if err != nil {
-        return fmt.Errorf("error displaying pull progress: %w", err)
-    }
-
-    return nil
+    return jsonmessage.DisplayJSONMessagesStream(pullStream, os.Stdout, termFd, isTerm, nil)
 }
 
 func (d *DockerEngine) ImageExists(ctx context.Context, imageRef string) (bool, error) {
@@ -53,13 +47,15 @@ func (d *DockerEngine) ImageExists(ctx context.Context, imageRef string) (bool, 
     return true, nil
 }
 
-func (d *DockerEngine) RunContainer(ctx context.Context, imageRef string, entrypoint []string, cmdArgs []string) error {
+func (d *DockerEngine) RunContainer(ctx context.Context, imageRef string, entrypoint []string, cmdArgs []string, binds []string) error {
     resp, err := d.cli.ContainerCreate(ctx, &container.Config{
         Image:      imageRef,
-        Entrypoint: entrypoint,
+        Entrypoint: entrypoint, // Uses the invoke_cmd provided by the runner
         Cmd:        cmdArgs,
         Tty:        false,
-    }, nil, nil, nil, "")
+    }, &container.HostConfig{
+        Binds: binds, // Applies organized /cf/inputs and /cf/outputs mounts
+    }, nil, nil, "")
     if err != nil {
         return err
     }
@@ -72,11 +68,10 @@ func (d *DockerEngine) RunContainer(ctx context.Context, imageRef string, entryp
 
     statusCh, errCh := d.cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
     
-    // Stream logs
     out, err := d.cli.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true, Follow: true})
     if err == nil {
         defer out.Close()
-        stdcopy.StdCopy(os.Stdout, os.Stderr, out)
+        _, _ = stdcopy.StdCopy(os.Stdout, os.Stderr, out)
     }
 
     select {
@@ -87,6 +82,5 @@ func (d *DockerEngine) RunContainer(ctx context.Context, imageRef string, entryp
             return fmt.Errorf("container exited with non-zero status: %d", status.StatusCode)
         }
     }
-
     return nil
 }

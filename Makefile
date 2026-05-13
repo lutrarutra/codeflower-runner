@@ -15,7 +15,5 @@ codegen:
 
 build: codegen
 	go build -o build/codeflower cmd/main.go
-
-run: build
-	./build/codeflower $(ARGS)
+	./build/codeflower --version
 
