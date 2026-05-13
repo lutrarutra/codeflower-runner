@@ -1,9 +1,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	openapi "codeflower-runner/internal/backend"
 	"codeflower-runner/internal/engine"
@@ -21,28 +24,70 @@ func init() {
     rootCmd.AddCommand(runCmd)
 }
 
+func getCachePath(ref string) string {
+    cacheDir, err := os.UserCacheDir()
+    if err != nil {
+        cacheDir = os.TempDir()
+    }
+    safeName := strings.NewReplacer(":", "_", "/", "_", "\\", "_", "*", "_").Replace(ref) + ".json"
+    return filepath.Join(cacheDir, "codeflower", "specs", safeName)
+}
+
+func loadFromCache(ref string) (*openapi.RegistryImagePullResponse, error) {
+    path := getCachePath(ref)
+    data, err := os.ReadFile(path)
+    if err != nil {
+        return nil, err
+    }
+    
+    info, _ := os.Stat(path)
+    if time.Since(info.ModTime()) > 24 * time.Second {
+        return nil, fmt.Errorf("cache expired")
+    }
+
+    var resp openapi.RegistryImagePullResponse
+    if err := json.Unmarshal(data, &resp); err != nil {
+        return nil, err
+    }
+    return &resp, nil
+}
+
+func saveToCache(ref string, resp *openapi.RegistryImagePullResponse) {
+    path := getCachePath(ref)
+    _ = os.MkdirAll(filepath.Dir(path), 0755)
+    data, _ := json.Marshal(resp)
+    _ = os.WriteFile(path, data, 0644)
+}
+
 var runCmd = &cobra.Command{
     Use:   "run [ref] [command] [variant] -- [args...]",
     Short: "Pull (if needed) and run a tool release",
     Args:  cobra.MinimumNArgs(1),
     Run: func(cmd *cobra.Command, args []string) {
         runRef = args[0]
+		var pullResp *openapi.RegistryImagePullResponse
 
-        clientResp, err := GetAPIClient()
-        if err != nil {
-            fmt.Printf("Error: %v\n", err)
-            os.Exit(1)
+		if cached, err := loadFromCache(runRef); err == nil && !force {
+            pullResp = cached
+        } else {
+            clientResp, err := GetAPIClient()
+            if err != nil {
+                fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+                os.Exit(1)
+            }
+
+            params := &openapi.PullImageApiRegistryPullGetParams{Ref: &runRef}
+            resp, err := clientResp.PullImageApiRegistryPullGetWithResponse(cmd.Context(), params)
+            if err != nil || resp.JSON200 == nil {
+                fmt.Fprintf(os.Stderr, "Error getting image ref from server: %v\n", err)
+                os.Exit(1)
+            }
+            pullResp = resp.JSON200
+            saveToCache(runRef, pullResp)
         }
 
-        params := &openapi.PullImageApiRegistryPullGetParams{Ref: &runRef}
-        resp, err := clientResp.PullImageApiRegistryPullGetWithResponse(cmd.Context(), params)
-        if err != nil || resp.JSON200 == nil {
-            fmt.Printf("Error getting image ref: %v\n", err)
-            os.Exit(1)
-        }
-
-        imageRef := resp.JSON200.ImageRef
-        releaseSpec := resp.JSON200.ReleaseSpec
+        imageRef := pullResp.ImageRef
+        releaseSpec := pullResp.ReleaseSpec
 
         var selectedCommand *openapi.CommandSpecSchema
         var selectedVariant *openapi.CommandVariantSpecSchema
@@ -62,7 +107,7 @@ var runCmd = &cobra.Command{
             if len(releaseSpec.Commands) == 1 {
                 selectedCommand = &releaseSpec.Commands[0]
             } else {
-                fmt.Printf("Error: Multiple commands available. Please specify one: %v\n", getCommandNames(releaseSpec.Commands))
+                fmt.Fprintf(os.Stderr, "Error: Multiple commands available. Please specify one: %v\n", getCommandNames(releaseSpec.Commands))
                 os.Exit(1)
             }
         }
@@ -91,13 +136,13 @@ var runCmd = &cobra.Command{
                         if len(args) > 1 && imageArgs == nil {
                             imageArgs = args[1:]
                         }
-                        fmt.Println("Using default variant")
+                        fmt.Fprintf(os.Stderr, "Using default variant\n")
                         break
                     }
                 }
                 
                 if selectedVariant == nil {
-                    fmt.Printf("Error: Multiple variants available for command %s and none are named 'default'. Please specify one.\n", selectedCommand.Name)
+                    fmt.Fprintf(os.Stderr, "Error: Multiple variants available for command %s and none are named 'default'. Please specify one.\n", selectedCommand.Name)
                     os.Exit(1)
                 }
             }
@@ -106,25 +151,25 @@ var runCmd = &cobra.Command{
         entrypoint := []string{filepath.Join("/app", selectedVariant.InvokeCmd)}
         binds, validatedArgs, err := validateAndResolveMounts(selectedVariant, imageArgs)
         if err != nil {
-            fmt.Printf("Validation Error: %v\n", err)
+            fmt.Fprintf(os.Stderr, "Validation Error: %v\n", err)
             if !force {
-                fmt.Println("Use --force to ignore validation errors.")
+                fmt.Fprintf(os.Stderr, "Use --force to ignore validation errors.\n")
                 os.Exit(1)
             }
-            fmt.Println("Warning: Proceeding with --force despite validation errors.")
+            fmt.Fprintf(os.Stderr, "Warning: Proceeding with --force despite validation errors.\n")
             validatedArgs = imageArgs
         }
 
         var containerEngine engine.ContainerEngine
         containerEngine, err = engine.NewDockerEngine()
         if err != nil {
-            fmt.Println(err)
+            fmt.Fprintf(os.Stderr, "Error: %v\n", err)
             os.Exit(1)
         }
 
         exists, _ := containerEngine.ImageExists(cmd.Context(), imageRef)
         if !exists {
-            fmt.Printf("Image not found locally, pulling %s...\n", imageRef)
+            fmt.Fprintf(os.Stderr, "Image not found locally, pulling %s...\n", imageRef)
             containerEngine.PullImage(cmd.Context(), imageRef)
         }
 
@@ -138,11 +183,11 @@ var runCmd = &cobra.Command{
             variantStr = "@" + selectedVariant.Name
         }
 
-        fmt.Printf("Executing: %s:%s %s%s\n", runRef, versionStr, selectedCommand.Name, variantStr)
+        fmt.Fprintf(os.Stderr, "Executing: %s:%s %s%s\n", runRef, versionStr, selectedCommand.Name, variantStr)
         err = containerEngine.RunContainer(cmd.Context(), imageRef, entrypoint, validatedArgs, binds)
 
         if err != nil {
-            fmt.Printf("Error running container: %v\n", err)
+            fmt.Fprintf(os.Stderr, "Error running container: %v\n", err)
             os.Exit(1)
         }
     },

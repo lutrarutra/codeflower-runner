@@ -1,5 +1,7 @@
 .PHONY: build run codegen tidy
 
+VERSION=$(shell git describe --tags --always --dirty)
+
 ifneq ("$(wildcard .env)","")
     include .env
     export $(shell sed 's/=.*//' .env)
@@ -14,6 +16,6 @@ codegen:
 	oapi-codegen -config oapi-config.yaml build/openapi.json
 
 build: codegen
-	go build -o build/codeflower cmd/main.go
+	go build -ldflags="-X 'codeflower-runner/internal.Version=$(VERSION)'" -o build/codeflower cmd/main.go
 	./build/codeflower --version
 

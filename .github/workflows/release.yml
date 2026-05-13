@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            binary_name: codeflower-linux-amd64
+          - os: linux
+            arch: arm64
+            binary_name: codeflower-linux-arm64
+          - os: darwin
+            arch: amd64
+            binary_name: codeflower-darwin-amd64
+          - os: darwin
+            arch: arm64
+            binary_name: codeflower-darwin-arm64
+          - os: windows
+            arch: amd64
+            binary_name: codeflower-windows-amd64.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache: true
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+        run: |
+          # Use the tag name (e.g., v0.1.0) as the version
+          VERSION=${{ github.ref_name }}
+          go build -ldflags="-s -w -X 'codeflower-runner/internal.Version=$VERSION'" -o build/${{ matrix.binary_name }} cmd/main.go
+
+      - name: Upload Binaries to Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: build/${{ matrix.binary_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -6,10 +6,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var Version = "dev" 
+
 var rootCmd = &cobra.Command{
     Use:   "codeflower",
     Short: "CLI runner for Code Flower",
-	Version: "0.1.0",
+	Version: Version,
 }
 
 func Execute() {
