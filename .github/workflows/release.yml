@@ -49,7 +49,11 @@ jobs:
         run: |
           # Use the tag name (e.g., v0.1.0) as the version
           VERSION=${{ github.ref_name }}
-          go build -ldflags="-s -w -X 'codeflower-runner/internal.Version=$VERSION'" -o build/${{ matrix.binary_name }} cmd/main.go
+          LDFLAGS="-s -w \
+            -X 'codeflower-runner/internal/ui/cli.Version=$VERSION' \
+            -X 'codeflower-runner/internal/core/client.PUBLIC_BACKEND_URL=https://api.codeflower.app'"
+          
+          go build -ldflags="$LDFLAGS" -o build/${{ matrix.binary_name }} cmd/cli/main.go
 
       - name: Upload Binaries to Release
         uses: softprops/action-gh-release@v2
