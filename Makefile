@@ -15,7 +15,7 @@ codegen:
 	curl http://localhost:8000/openapi.json > build/openapi.json
 	oapi-codegen -config oapi-config.yaml build/openapi.json
 
-build: codegen
-	go build -ldflags="-X 'codeflower-runner/internal.Version=$(VERSION)'" -o build/codeflower cmd/main.go
+build: #codegen
+	go build -ldflags="-X 'codeflower-runner/internal.Version=$(VERSION)'" -o build/codeflower cmd/cli/main.go
 	./build/codeflower --version
 

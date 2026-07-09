@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"codeflower-runner/internal/core/client"
@@ -17,11 +18,132 @@ import (
 var (
 	runRef string
 	force  bool
+	noPull bool
 )
 
 func init() {
 	runCmd.Flags().BoolVarP(&force, "force", "f", false, "Ignore validation errors and force execution")
+	runCmd.Flags().BoolVar(&noPull, "no-pull", false, "Skip pulling the image, use local copy only")
 	rootCmd.AddCommand(runCmd)
+	runCmd.SetHelpFunc(runHelpFunc)
+}
+
+func runHelpFunc(cmd *cobra.Command, args []string) {
+	// Parse os.Args to find the ref — it's the first non-flag arg after "run"
+	var ref string
+	for i, a := range os.Args {
+		if a == "run" && i+1 < len(os.Args) {
+			candidate := os.Args[i+1]
+			if !strings.HasPrefix(candidate, "-") && candidate != "help" {
+				ref = candidate
+			}
+			break
+		}
+	}
+	if ref == "" {
+		// No ref — show generic run help
+		cmd.Root().HelpFunc()(cmd, args)
+		return
+	}
+
+	// Fetch release spec from the API to show tool info
+	if apiToken == "" {
+		fmt.Fprintf(os.Stderr, "Error: not authenticated. Run 'codeflower init' first.\n")
+		os.Exit(1)
+	}
+
+	clientResp, err := client.GetAPIClient(apiToken)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	params := &openapi.PullImageApiRegistryPullGetParams{Ref: &ref}
+	resp, err := clientResp.PullImageApiRegistryPullGetWithResponse(cmd.Context(), params)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error getting info for %q: %v\n", ref, err)
+		os.Exit(1)
+	}
+	if resp.JSON200 == nil {
+		status := "<nil>"
+		body := ""
+		if resp.HTTPResponse != nil {
+			status = resp.HTTPResponse.Status
+		}
+		if len(resp.Body) > 0 {
+			body = string(resp.Body)
+		}
+		fmt.Fprintf(os.Stderr, "Error getting info for %q: %s\n", ref, status)
+		if body != "" {
+			fmt.Fprintf(os.Stderr, "  Body: %s\n", body)
+		}
+		os.Exit(1)
+	}
+
+	spec := resp.JSON200.ReleaseSpec
+
+	fmt.Fprintf(os.Stderr, "Usage:\n")
+	fmt.Fprintf(os.Stderr, "  %s [command] [variant] -- [args...]\n\n", ref)
+	fmt.Fprintf(os.Stderr, "Flags:\n")
+	fmt.Fprintf(os.Stderr, "  -f, --force   Ignore validation errors and force execution\n")
+	fmt.Fprintf(os.Stderr, "      --no-pull Skip pulling the image, use local copy only\n\n")
+	fmt.Fprintf(os.Stderr, "Available commands:\n")
+	for _, c := range spec.Commands {
+		desc := ""
+		if c.Description != nil {
+			desc = *c.Description
+		}
+		fmt.Fprintf(os.Stderr, "  %-20s %s\n", c.Name, desc)
+		fmt.Fprintf(os.Stderr, "    Variants:\n")
+		for _, v := range c.Variants {
+			fmt.Fprintf(os.Stderr, "      %-16s invoke: %s\n", v.Name, v.InvokeCmd)
+			if len(v.Parameters) > 0 {
+				fmt.Fprintf(os.Stderr, "      Parameters:\n")
+				for _, p := range v.Parameters {
+					req := "optional"
+					if p.IsRequired {
+						req = "required"
+					}
+					prefix := ""
+					if p.Prefix != nil {
+						prefix = *p.Prefix + " "
+					}
+					desc = ""
+					if p.Description != nil {
+						desc = *p.Description
+					}
+					fmt.Fprintf(os.Stderr, "        %-12s %s%-20s [%s]  %s\n", p.Type, prefix, p.Name, req, desc)
+				}
+			}
+		}
+		fmt.Fprintf(os.Stderr, "\n")
+	}
+
+	fmt.Fprintf(os.Stderr, "Examples:\n")
+	// Show examples for each command's default variant
+	for _, c := range spec.Commands {
+		for _, v := range c.Variants {
+			if v.Name == "default" || len(c.Variants) == 1 {
+				args := ""
+				for _, p := range v.Parameters {
+					if p.IsRequired {
+						prefix := ""
+						if p.Prefix != nil {
+							prefix = *p.Prefix + " "
+						}
+						args += prefix + "<" + p.Name + "> "
+					}
+				}
+				variant := ""
+				if v.Name != "default" {
+					variant = " " + v.Name
+				}
+				fmt.Fprintf(os.Stderr, "  %s %s%s -- %s\n", ref, c.Name, variant, strings.TrimSpace(args))
+				break
+			}
+		}
+	}
+	fmt.Fprintf(os.Stderr, "\n")
 }
 
 var runCmd = &cobra.Command{
@@ -56,8 +178,23 @@ var runCmd = &cobra.Command{
 			params := &openapi.PullImageApiRegistryPullGetParams{Ref: &runRef}
 			resp, err := clientResp.PullImageApiRegistryPullGetWithResponse(cmd.Context(), params)
 
-			if err != nil || resp.JSON200 == nil {
+			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error getting image ref from server: %v\n", err)
+				os.Exit(1)
+			}
+			if resp.JSON200 == nil {
+				status := "<nil>"
+				body := ""
+				if resp.HTTPResponse != nil {
+					status = resp.HTTPResponse.Status
+				}
+				if len(resp.Body) > 0 {
+					body = string(resp.Body)
+				}
+				fmt.Fprintf(os.Stderr, "Error getting image ref from server: %s\n", status)
+				if body != "" {
+					fmt.Fprintf(os.Stderr, "  Body: %s\n", body)
+				}
 				os.Exit(1)
 			}
 
@@ -150,6 +287,10 @@ var runCmd = &cobra.Command{
 
 		exists, _ := containerEngine.ImageExists(cmd.Context(), imageRef)
 		if !exists {
+			if noPull {
+				fmt.Fprintf(os.Stderr, "Error: image %s not found locally and --no-pull is set\n", imageRef)
+				os.Exit(1)
+			}
 			fmt.Fprintf(os.Stderr, "Image not found locally, pulling %s...\n", imageRef)
 			if err := containerEngine.PullImage(cmd.Context(), imageRef); err != nil {
 				fmt.Fprintf(os.Stderr, "Error: Failed to pull image: %v\n", err)
