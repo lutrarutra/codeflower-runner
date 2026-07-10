@@ -64,6 +64,109 @@ func extractRefFromArgs(subcmd string) string {
 	return ""
 }
 
+// printToolReleaseHelp prints a formatted help page for a tool release spec to stderr.
+// The format matches compile_usage_string from the backend's cwl.py.
+func printToolReleaseHelp(spec openapi.ToolReleaseSpecSchema) {
+	for _, c := range spec.Commands {
+		cmdDesc := ""
+		if c.Description != nil {
+			cmdDesc = *c.Description
+		}
+		fmt.Fprintf(os.Stderr, "Command: %s", c.Name)
+		if cmdDesc != "" {
+			fmt.Fprintf(os.Stderr, "  %s", cmdDesc)
+		}
+		fmt.Fprintf(os.Stderr, "\n")
+
+		for _, v := range c.Variants {
+			type paramRow struct {
+				leftStr string
+				desc    string
+			}
+			var positionals, options []paramRow
+			maxLeft := 0
+			for _, p := range v.Parameters {
+				leftStr := ""
+				if p.Prefix != nil {
+					leftStr += *p.Prefix
+					if p.Separate {
+						leftStr += " "
+					}
+				}
+				leftStr += "{" + p.Name + "}"
+				if len(leftStr) > maxLeft {
+					maxLeft = len(leftStr)
+				}
+
+				desc := ""
+				if p.Description != nil {
+					desc = *p.Description
+				} else {
+					desc = "No description provided."
+				}
+
+				constraints := []string{}
+				if p.IsRequired {
+					constraints = append(constraints, "Required")
+				}
+				constraints = append(constraints, fmt.Sprintf("Type: %s", p.Type))
+				if constraints != nil {
+					desc += fmt.Sprintf(" (%s)", strings.Join(constraints, ", "))
+				}
+
+				row := paramRow{leftStr: leftStr, desc: desc}
+				if p.Prefix != nil {
+					options = append(options, row)
+				} else {
+					positionals = append(positionals, row)
+				}
+			}
+
+			leftColWidth := maxLeft + 4
+			if leftColWidth > 40 {
+				leftColWidth = 40
+			}
+
+			fmt.Fprintf(os.Stderr, "\n")
+			if v.Name == "default" {
+				fmt.Fprintf(os.Stderr, "  Usage: %s", v.InvokeCmd)
+			} else {
+				fmt.Fprintf(os.Stderr, "  Variant: %s  invoke: %s", v.Name, v.InvokeCmd)
+			}
+			if len(options) > 0 {
+				fmt.Fprintf(os.Stderr, " [OPTIONS]")
+			}
+			for _, p := range v.Parameters {
+				if p.Prefix == nil {
+					val := "{" + p.Name + "}"
+					if !p.IsRequired {
+						val = "[" + val + "]"
+					}
+					fmt.Fprintf(os.Stderr, " %s", val)
+				}
+			}
+			fmt.Fprintf(os.Stderr, "\n")
+
+			if len(positionals) > 0 {
+				fmt.Fprintf(os.Stderr, "\n")
+				fmt.Fprintf(os.Stderr, "    Positional Arguments:\n")
+				for _, row := range positionals {
+					fmt.Fprintf(os.Stderr, "      %s%s%s\n", row.leftStr, strings.Repeat(" ", leftColWidth-len(row.leftStr)), row.desc)
+				}
+			}
+
+			if len(options) > 0 {
+				fmt.Fprintf(os.Stderr, "\n")
+				fmt.Fprintf(os.Stderr, "    Options:\n")
+				for _, row := range options {
+					fmt.Fprintf(os.Stderr, "      %s%s%s\n", row.leftStr, strings.Repeat(" ", leftColWidth-len(row.leftStr)), row.desc)
+				}
+			}
+			fmt.Fprintf(os.Stderr, "\n")
+		}
+	}
+}
+
 // printToolHelp fetches tool info from the API and prints it to stderr.
 func printToolHelp(cmd *cobra.Command, ref string) {
 	sm, err := storage.NewManager()
@@ -88,37 +191,5 @@ func printToolHelp(cmd *cobra.Command, ref string) {
 		os.Exit(1)
 	}
 
-	spec := resp.JSON200.ReleaseSpec
-	fmt.Fprintf(os.Stderr, "Usage:\n")
-	fmt.Fprintf(os.Stderr, "  codeflower %s %s -- [docker-flags...] -- [args...]\n\n", cmd.Name(), ref)
-	fmt.Fprintf(os.Stderr, "Available commands:\n")
-	for _, c := range spec.Commands {
-		desc := ""
-		if c.Description != nil {
-			desc = *c.Description
-		}
-		fmt.Fprintf(os.Stderr, "  %-20s %s\n", c.Name, desc)
-		fmt.Fprintf(os.Stderr, "    Variants:\n")
-		for _, v := range c.Variants {
-			fmt.Fprintf(os.Stderr, "      %-16s invoke: %s\n", v.Name, v.InvokeCmd)
-			if len(v.Parameters) > 0 {
-				fmt.Fprintf(os.Stderr, "      Parameters:\n")
-				for _, p := range v.Parameters {
-					req := "optional"
-					if p.IsRequired {
-						req = "required"
-					}
-					prefix := ""
-					if p.Prefix != nil {
-						prefix = *p.Prefix + " "
-					}
-					d := ""
-					if p.Description != nil {
-						d = *p.Description
-					}
-					fmt.Fprintf(os.Stderr, "        %-12s %s%-20s [%s]  %s\n", p.Type, prefix, p.Name, req, d)
-				}
-			}
-		}
-	}
+	printToolReleaseHelp(resp.JSON200.ReleaseSpec)
 }

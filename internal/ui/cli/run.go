@@ -47,12 +47,18 @@ func runHelpFunc(cmd *cobra.Command, args []string) {
 	}
 
 	// Fetch release spec from the API to show tool info
-	if apiToken == "" {
-		fmt.Fprintf(os.Stderr, "Error: not authenticated. Run 'codeflower init' first.\n")
+	sm, err := storage.NewManager()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error initializing storage: %v\n", err)
+		os.Exit(1)
+	}
+	token, err := sm.GetAPIToken()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error retrieving API token: %v\n", err)
 		os.Exit(1)
 	}
 
-	clientResp, err := client.GetAPIClient(apiToken)
+	clientResp, err := client.GetAPIClient(token)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
@@ -80,70 +86,7 @@ func runHelpFunc(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	spec := resp.JSON200.ReleaseSpec
-
-	fmt.Fprintf(os.Stderr, "Usage:\n")
-	fmt.Fprintf(os.Stderr, "  %s [command] [variant] -- [args...]\n\n", ref)
-	fmt.Fprintf(os.Stderr, "Flags:\n")
-	fmt.Fprintf(os.Stderr, "  -f, --force   Ignore validation errors and force execution\n")
-	fmt.Fprintf(os.Stderr, "      --no-pull Skip pulling the image, use local copy only\n\n")
-	fmt.Fprintf(os.Stderr, "Available commands:\n")
-	for _, c := range spec.Commands {
-		desc := ""
-		if c.Description != nil {
-			desc = *c.Description
-		}
-		fmt.Fprintf(os.Stderr, "  %-20s %s\n", c.Name, desc)
-		fmt.Fprintf(os.Stderr, "    Variants:\n")
-		for _, v := range c.Variants {
-			fmt.Fprintf(os.Stderr, "      %-16s invoke: %s\n", v.Name, v.InvokeCmd)
-			if len(v.Parameters) > 0 {
-				fmt.Fprintf(os.Stderr, "      Parameters:\n")
-				for _, p := range v.Parameters {
-					req := "optional"
-					if p.IsRequired {
-						req = "required"
-					}
-					prefix := ""
-					if p.Prefix != nil {
-						prefix = *p.Prefix + " "
-					}
-					desc = ""
-					if p.Description != nil {
-						desc = *p.Description
-					}
-					fmt.Fprintf(os.Stderr, "        %-12s %s%-20s [%s]  %s\n", p.Type, prefix, p.Name, req, desc)
-				}
-			}
-		}
-		fmt.Fprintf(os.Stderr, "\n")
-	}
-
-	fmt.Fprintf(os.Stderr, "Examples:\n")
-	// Show examples for each command's default variant
-	for _, c := range spec.Commands {
-		for _, v := range c.Variants {
-			if v.Name == "default" || len(c.Variants) == 1 {
-				args := ""
-				for _, p := range v.Parameters {
-					if p.IsRequired {
-						prefix := ""
-						if p.Prefix != nil {
-							prefix = *p.Prefix + " "
-						}
-						args += prefix + "<" + p.Name + "> "
-					}
-				}
-				variant := ""
-				if v.Name != "default" {
-					variant = " " + v.Name
-				}
-				fmt.Fprintf(os.Stderr, "  %s %s%s -- %s\n", ref, c.Name, variant, strings.TrimSpace(args))
-				break
-			}
-		}
-	}
-	fmt.Fprintf(os.Stderr, "\n")
+	printToolReleaseHelp(resp.JSON200.ReleaseSpec)
 }
 
 var runCmd = &cobra.Command{
