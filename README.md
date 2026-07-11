@@ -24,6 +24,21 @@ All commands (except `init`) require prior authentication via an API token.
 
 ## Commands
 
+### `inspect`
+
+Reverse-engineer a local executable into a YAML command specification. The
+executable is copied into a temporary Docker image and each LLM-requested
+command runs as the image entrypoint, one command per iteration. By default,
+the analysis container is non-root, read-only, has no host mounts, no network,
+dropped capabilities, and resource/time limits.
+
+```bash
+codeflower inspect ./my-tool --api-url https://api.openai.com/v1/chat/completions --api-key sk-xxx
+```
+
+Use `--allow-internet` only when the analyzed tool needs network access. This
+prints a warning to stderr; generated YAML remains on stdout.
+
 ### `init`
 
 Authenticate with the backend and save your API token locally.

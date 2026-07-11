@@ -1,9 +1,11 @@
 package engine
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
@@ -83,4 +85,102 @@ func (d *DockerEngine) RunContainer(ctx context.Context, imageRef string, entryp
 		}
 	}
 	return nil
+}
+
+// RunContainerWithOutput runs a container and captures stdout/stderr as strings.
+func (d *DockerEngine) RunContainerWithOutput(ctx context.Context, imageRef string, entrypoint []string, cmdArgs []string, binds []string) (stdout string, stderr string, err error) {
+	return d.runContainerWithOutput(ctx, imageRef, entrypoint, cmdArgs, binds, false)
+}
+
+// RunContainerWithOutputPolicy runs a container with the restrictive policy used
+// by inspect. No host paths are mounted and network access is disabled
+// unless allowInternet is explicitly requested.
+func (d *DockerEngine) RunContainerWithOutputPolicy(ctx context.Context, imageRef string, entrypoint []string, cmdArgs []string, allowInternet bool) (stdout string, stderr string, err error) {
+	return d.runContainerWithOutput(ctx, imageRef, entrypoint, cmdArgs, nil, allowInternet)
+}
+
+func (d *DockerEngine) runContainerWithOutput(ctx context.Context, imageRef string, entrypoint []string, cmdArgs []string, binds []string, allowInternet bool) (stdout string, stderr string, err error) {
+	networkMode := container.NetworkMode("none")
+	if allowInternet {
+		networkMode = container.NetworkMode("default")
+	}
+
+	resp, err := d.cli.ContainerCreate(ctx, &container.Config{
+		Image:      imageRef,
+		Entrypoint: entrypoint,
+		Cmd:        cmdArgs,
+		Tty:        false,
+	}, &container.HostConfig{
+		Binds:          binds,
+		NetworkMode:    networkMode,
+		ReadonlyRootfs: true,
+		SecurityOpt:    []string{"no-new-privileges:true"},
+		CapDrop:        []string{"ALL"},
+		Resources: container.Resources{
+			PidsLimit: int64Ptr(128),
+			Memory:    512 * 1024 * 1024,
+			NanoCPUs:  2 * 1e9,
+		},
+	}, nil, nil, "")
+	if err != nil {
+		return "", "", fmt.Errorf("container create: %w", err)
+	}
+
+	defer func() {
+		_ = d.cli.ContainerRemove(context.Background(), resp.ID, container.RemoveOptions{Force: true})
+	}()
+
+	if err := d.cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return "", "", fmt.Errorf("container start: %w", err)
+	}
+
+	statusCh, errCh := d.cli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+
+	out, err := d.cli.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true, ShowStderr: true, Follow: true})
+	if err != nil {
+		return "", "", fmt.Errorf("container logs: %w", err)
+	}
+	defer out.Close()
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+	_, _ = stdcopy.StdCopy(&stdoutBuf, &stderrBuf, out)
+
+	select {
+	case waitErr := <-errCh:
+		return stdoutBuf.String(), stderrBuf.String(), waitErr
+	case status := <-statusCh:
+		if status.StatusCode != 0 {
+			return stdoutBuf.String(), stderrBuf.String(), fmt.Errorf("container exited with status %d", status.StatusCode)
+		}
+	}
+
+	return stdoutBuf.String(), stderrBuf.String(), nil
+}
+
+func int64Ptr(value int64) *int64 {
+	return &value
+}
+
+// BuildImage builds a Docker image from a Dockerfile in the given context directory.
+// Uses the docker CLI (subprocess) to avoid SDK archive compatibility issues.
+func (d *DockerEngine) BuildImage(ctx context.Context, contextDir string, tag string) error {
+	args := []string{"build", "-t", tag, "-f", contextDir + "/Dockerfile", contextDir}
+	cmd := exec.CommandContext(ctx, "docker", args...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("docker build failed: %w", err)
+	}
+	return nil
+}
+
+// RemoveImage removes a Docker image by reference.
+func (d *DockerEngine) RemoveImage(ctx context.Context, imageRef string) error {
+	_, err := d.cli.ImageRemove(ctx, imageRef, image.RemoveOptions{Force: true})
+	return err
+}
+
+// Close closes the Docker client connection.
+func (d *DockerEngine) Close() error {
+	return d.cli.Close()
 }
