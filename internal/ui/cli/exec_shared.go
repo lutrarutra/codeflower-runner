@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
@@ -34,20 +35,56 @@ func resolveImageRef(cmd *cobra.Command, ref string) (string, error) {
 		return "", fmt.Errorf("contacting server: %w", err)
 	}
 	if resp.JSON200 == nil {
-		status := "<nil>"
-		body := ""
-		if resp.HTTPResponse != nil {
-			status = resp.HTTPResponse.Status
-		}
-		if len(resp.Body) > 0 {
-			body = string(resp.Body)
-		}
-		if body != "" {
-			return "", fmt.Errorf("server returned %s: %s", status, body)
-		}
-		return "", fmt.Errorf("server returned %s", status)
+		return "", pullImageError(ref, resp)
 	}
 	return resp.JSON200.ImageRef, nil
+}
+
+func pullImageError(ref string, resp *openapi.PullImageApiRegistryPullGetResponse) error {
+	if resp == nil {
+		return fmt.Errorf("backend returned no response while resolving %q", ref)
+	}
+
+	statusCode := resp.StatusCode()
+	detail := ""
+	switch statusCode {
+	case http.StatusNotFound:
+		if resp.JSON404 != nil {
+			detail = resp.JSON404.Detail
+		}
+	case http.StatusUnprocessableEntity:
+		if resp.JSON422 != nil {
+			detail = resp.JSON422.Detail
+		}
+	case http.StatusInternalServerError:
+		if resp.JSON500 != nil {
+			detail = resp.JSON500.Detail
+		}
+	}
+
+	if statusCode == http.StatusNotFound {
+		if detail == "ToolRelease not found" {
+			return fmt.Errorf("tool release %q was not found; check the tool name, release tag, and that the release is published and accessible", ref)
+		}
+		return fmt.Errorf("tool reference %q was not found: %s", ref, detailOrStatus(detail, resp.Status()))
+	}
+	if statusCode == http.StatusForbidden {
+		return fmt.Errorf("access denied for tool reference %q; check that the release is published and that you have permission to use it", ref)
+	}
+	if detail != "" {
+		return fmt.Errorf("backend rejected tool reference %q: %s", ref, detail)
+	}
+	return fmt.Errorf("backend returned %s while resolving %q", detailOrStatus("", resp.Status()), ref)
+}
+
+func detailOrStatus(detail string, status string) string {
+	if detail != "" {
+		return detail
+	}
+	if status != "" {
+		return status
+	}
+	return "unknown error"
 }
 
 // extractRefFromArgs finds the first non-flag argument after the given subcommand in os.Args.
@@ -72,7 +109,7 @@ func printToolReleaseHelp(spec openapi.ToolReleaseSpecSchema) {
 		if c.Description != nil {
 			cmdDesc = *c.Description
 		}
-		fmt.Fprintf(os.Stderr, "Command: %s", c.Name)
+		fmt.Fprintf(os.Stderr, "Command: %s", commandDisplayName(c.Name))
 		if cmdDesc != "" {
 			fmt.Fprintf(os.Stderr, "  %s", cmdDesc)
 		}
@@ -129,9 +166,9 @@ func printToolReleaseHelp(spec openapi.ToolReleaseSpecSchema) {
 
 			fmt.Fprintf(os.Stderr, "\n")
 			if v.Name == "default" {
-				fmt.Fprintf(os.Stderr, "  Usage: %s", v.InvokeCmd)
+				fmt.Fprintf(os.Stderr, "  Usage: %s", strings.Join(c.InvokeArgs, " "))
 			} else {
-				fmt.Fprintf(os.Stderr, "  Variant: %s  invoke: %s", v.Name, v.InvokeCmd)
+				fmt.Fprintf(os.Stderr, "  Variant: %s", v.Name)
 			}
 			if len(options) > 0 {
 				fmt.Fprintf(os.Stderr, " [OPTIONS]")
@@ -167,6 +204,13 @@ func printToolReleaseHelp(spec openapi.ToolReleaseSpecSchema) {
 	}
 }
 
+func commandDisplayName(name *string) string {
+	if name == nil {
+		return "<root>"
+	}
+	return *name
+}
+
 // printToolHelp fetches tool info from the API and prints it to stderr.
 func printToolHelp(cmd *cobra.Command, ref string) {
 	sm, err := storage.NewManager()
@@ -186,8 +230,12 @@ func printToolHelp(cmd *cobra.Command, ref string) {
 	}
 	params := &openapi.PullImageApiRegistryPullGetParams{Ref: &ref}
 	resp, err := clientResp.PullImageApiRegistryPullGetWithResponse(cmd.Context(), params)
-	if err != nil || resp.JSON200 == nil {
-		fmt.Fprintf(os.Stderr, "Error getting info for %q\n", ref)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error contacting backend while resolving %q: %v\n", ref, err)
+		os.Exit(1)
+	}
+	if resp.JSON200 == nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", pullImageError(ref, resp))
 		os.Exit(1)
 	}
 

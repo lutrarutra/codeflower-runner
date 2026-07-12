@@ -249,22 +249,22 @@ func (e FileRelation) Valid() bool {
 
 // Defines values for ParameterType.
 const (
-	Boolean ParameterType = "boolean"
-	Numeric ParameterType = "numeric"
-	Path    ParameterType = "path"
-	String  ParameterType = "string"
+	ParameterTypeBoolean ParameterType = "boolean"
+	ParameterTypeNumeric ParameterType = "numeric"
+	ParameterTypePath    ParameterType = "path"
+	ParameterTypeString  ParameterType = "string"
 )
 
 // Valid indicates whether the value is a known member of the ParameterType enum.
 func (e ParameterType) Valid() bool {
 	switch e {
-	case Boolean:
+	case ParameterTypeBoolean:
 		return true
-	case Numeric:
+	case ParameterTypeNumeric:
 		return true
-	case Path:
+	case ParameterTypePath:
 		return true
-	case String:
+	case ParameterTypeString:
 		return true
 	default:
 		return false
@@ -292,6 +292,33 @@ func (e ReleaseState) Valid() bool {
 	case ReleaseStatePrivate:
 		return true
 	case ReleaseStatePublished:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RunStatus.
+const (
+	Cancelled RunStatus = "cancelled"
+	Completed RunStatus = "completed"
+	Failed    RunStatus = "failed"
+	Pending   RunStatus = "pending"
+	Running   RunStatus = "running"
+)
+
+// Valid indicates whether the value is a known member of the RunStatus enum.
+func (e RunStatus) Valid() bool {
+	switch e {
+	case Cancelled:
+		return true
+	case Completed:
+		return true
+	case Failed:
+		return true
+	case Pending:
+		return true
+	case Running:
 		return true
 	default:
 		return false
@@ -362,6 +389,7 @@ func (e ServiceUnit) Valid() bool {
 const (
 	StorageTypeArchive  StorageType = "archive"
 	StorageTypeData     StorageType = "data"
+	StorageTypeDocument StorageType = "document"
 	StorageTypeMedia    StorageType = "media"
 	StorageTypeRegistry StorageType = "registry"
 	StorageTypeTemp     StorageType = "temp"
@@ -373,6 +401,8 @@ func (e StorageType) Valid() bool {
 	case StorageTypeArchive:
 		return true
 	case StorageTypeData:
+		return true
+	case StorageTypeDocument:
 		return true
 	case StorageTypeMedia:
 		return true
@@ -442,6 +472,30 @@ func (e UserType) Valid() bool {
 	case UserTypeN10:
 		return true
 	case UserTypeN100:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VariableType.
+const (
+	VariableTypeBool   VariableType = "bool"
+	VariableTypeFloat  VariableType = "float"
+	VariableTypeInt    VariableType = "int"
+	VariableTypeString VariableType = "string"
+)
+
+// Valid indicates whether the value is a known member of the VariableType enum.
+func (e VariableType) Valid() bool {
+	switch e {
+	case VariableTypeBool:
+		return true
+	case VariableTypeFloat:
+		return true
+	case VariableTypeInt:
+		return true
+	case VariableTypeString:
 		return true
 	default:
 		return false
@@ -555,16 +609,16 @@ type AddPathParameterForm struct {
 
 // AddStringParameterForm defines model for AddStringParameterForm.
 type AddStringParameterForm struct {
-	AllowedValues *[]interface{} `json:"allowed_values"`
-	Default       *string        `json:"default"`
-	Description   *string        `json:"description"`
-	IsArray       bool           `json:"is_array"`
-	IsRequired    bool           `json:"is_required"`
-	ItemSeparator *string        `json:"item_separator,omitempty"`
-	Name          string         `json:"name"`
-	Position      *int           `json:"position,omitempty"`
-	Prefix        *string        `json:"prefix,omitempty"`
-	Separate      bool           `json:"separate"`
+	AllowedValues *[]string `json:"allowed_values"`
+	Default       *string   `json:"default"`
+	Description   *string   `json:"description"`
+	IsArray       bool      `json:"is_array"`
+	IsRequired    bool      `json:"is_required"`
+	ItemSeparator *string   `json:"item_separator,omitempty"`
+	Name          string    `json:"name"`
+	Position      *int      `json:"position,omitempty"`
+	Prefix        *string   `json:"prefix,omitempty"`
+	Separate      bool      `json:"separate"`
 }
 
 // AuthResponse defines model for AuthResponse.
@@ -614,10 +668,12 @@ type BucketAccess string
 
 // BucketForm defines model for BucketForm.
 type BucketForm struct {
-	Access     BucketAccess   `json:"access"`
-	BucketType StorageType    `json:"bucket_type"`
-	Provider   BucketProvider `json:"provider"`
-	Region     string         `json:"region"`
+	Access      BucketAccess   `json:"access"`
+	BucketType  StorageType    `json:"bucket_type"`
+	EndpointUrl string         `json:"endpoint_url"`
+	Provider    BucketProvider `json:"provider"`
+	PublicUrl   *string        `json:"public_url"`
+	Region      string         `json:"region"`
 }
 
 // BucketProvider defines model for BucketProvider.
@@ -655,7 +711,8 @@ type CommandSearchSchema struct {
 // CommandSpecSchema defines model for CommandSpecSchema.
 type CommandSpecSchema struct {
 	Description *string                    `json:"description"`
-	Name        string                     `json:"name"`
+	InvokeArgs  []string                   `json:"invoke_args"`
+	Name        *string                    `json:"name"`
 	Variants    []CommandVariantSpecSchema `json:"variants"`
 }
 
@@ -774,6 +831,11 @@ type CreateWorkflowReleaseResponse struct {
 
 // CreateWorkflowResponse defines model for CreateWorkflowResponse.
 type CreateWorkflowResponse struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+// CreateWorkflowRunResponse defines model for CreateWorkflowRunResponse.
+type CreateWorkflowRunResponse struct {
 	Id openapi_types.UUID `json:"id"`
 }
 
@@ -930,6 +992,13 @@ type NodeConnectionSchema struct {
 	TargetParamSpec ParamSpecNodeSchema `json:"target_param_spec"`
 }
 
+// PackageImageResponse defines model for PackageImageResponse.
+type PackageImageResponse struct {
+	Image      ServerRoutesToolsReleasesGetDockerImageResponse `json:"image"`
+	PublicUri  *string                                         `json:"public_uri"`
+	SourceType DockerImageSourceType                           `json:"source_type"`
+}
+
 // PagedAPITokensResponse defines model for PagedAPITokensResponse.
 type PagedAPITokensResponse struct {
 	Items []APITokenSchema `json:"items"`
@@ -939,7 +1008,7 @@ type PagedAPITokensResponse struct {
 // ParamSpec defines model for ParamSpec.
 type ParamSpec struct {
 	Description *string       `json:"description"`
-	IoSpec      interface{}   `json:"io_spec"`
+	IoSpec      IOSpec        `json:"io_spec"`
 	IsRequired  bool          `json:"is_required"`
 	Name        string        `json:"name"`
 	Position    *int          `json:"position"`
@@ -949,17 +1018,22 @@ type ParamSpec struct {
 
 // ParamSpecNodeSchema defines model for ParamSpecNodeSchema.
 type ParamSpecNodeSchema struct {
-	Id         openapi_types.UUID `json:"id"`
-	IoSpec     IOSpecNodeSchema   `json:"io_spec"`
-	IsRequired bool               `json:"is_required"`
-	Name       string             `json:"name"`
-	Type       ParameterType      `json:"type"`
+	AllowedValues *[]string          `json:"allowed_values"`
+	DefaultValue  WrappedVariable    `json:"default_value"`
+	Description   *string            `json:"description"`
+	Id            openapi_types.UUID `json:"id"`
+	IoSpec        IOSpecNodeSchema   `json:"io_spec"`
+	IsRequired    bool               `json:"is_required"`
+	MaxValue      *float32           `json:"max_value"`
+	MinValue      *float32           `json:"min_value"`
+	Name          string             `json:"name"`
+	Type          ParameterType      `json:"type"`
 }
 
 // ParamSpecSchema defines model for ParamSpecSchema.
 type ParamSpecSchema struct {
-	AllowedValues *[]interface{}          `json:"allowed_values"`
-	DefaultValue  *map[string]interface{} `json:"default_value"`
+	AllowedValues *[]string               `json:"allowed_values"`
+	DefaultValue  *map[string]interface{} `json:"default_value,omitempty"`
 	Description   *string                 `json:"description"`
 	IsArray       bool                    `json:"is_array"`
 	IsRequired    bool                    `json:"is_required"`
@@ -1017,6 +1091,47 @@ type ReleaseSearchSchema struct {
 // ReleaseState defines model for ReleaseState.
 type ReleaseState string
 
+// RunStatus defines model for RunStatus.
+type RunStatus string
+
+// RunTaskSummary defines model for RunTaskSummary.
+type RunTaskSummary struct {
+	Id             openapi_types.UUID     `json:"id"`
+	Name           *string                `json:"name"`
+	Parameters     map[string]interface{} `json:"parameters"`
+	Status         RunStatus              `json:"status"`
+	WorkflowNodeId *openapi_types.UUID    `json:"workflow_node_id"`
+}
+
+// RunTasksResponse defines model for RunTasksResponse.
+type RunTasksResponse struct {
+	Items []RunTaskSummary `json:"items"`
+}
+
+// SaveNodeParametersForm defines model for SaveNodeParametersForm.
+type SaveNodeParametersForm struct {
+	// Parameters Map of param name -> raw value. Types are coerced to match the ParamSpec.
+	Parameters *map[string]interface{} `json:"parameters,omitempty"`
+}
+
+// SaveNodeParametersResponse defines model for SaveNodeParametersResponse.
+type SaveNodeParametersResponse struct {
+	Id         openapi_types.UUID          `json:"id"`
+	Parameters *map[string]WrappedVariable `json:"parameters"`
+}
+
+// SaveRunTaskParametersForm defines model for SaveRunTaskParametersForm.
+type SaveRunTaskParametersForm struct {
+	// Parameters Map of param name -> raw value. Types are coerced to match the ParamSpec.
+	Parameters *map[string]interface{} `json:"parameters,omitempty"`
+}
+
+// SaveRunTaskParametersResponse defines model for SaveRunTaskParametersResponse.
+type SaveRunTaskParametersResponse struct {
+	Id         openapi_types.UUID      `json:"id"`
+	Parameters *map[string]interface{} `json:"parameters"`
+}
+
 // ServiceStatus defines model for ServiceStatus.
 type ServiceStatus string
 
@@ -1028,7 +1143,6 @@ type ServiceUnit string
 
 // ServicesStatusResponse defines model for ServicesStatusResponse.
 type ServicesStatusResponse struct {
-	Minio    ServiceStatus `json:"minio"`
 	Proxmox  ServiceStatus `json:"proxmox"`
 	Redis    ServiceStatus `json:"redis"`
 	Registry ServiceStatus `json:"registry"`
@@ -1042,6 +1156,12 @@ type SignUpForm struct {
 	LastName        string `json:"last_name"`
 	Password        string `json:"password"`
 	Username        string `json:"username"`
+}
+
+// StartValidationResponse defines model for StartValidationResponse.
+type StartValidationResponse struct {
+	Missing *[]string `json:"missing,omitempty"`
+	Ok      bool      `json:"ok"`
 }
 
 // StorageType defines model for StorageType.
@@ -1060,7 +1180,7 @@ type ToolCardResponse struct {
 type ToolCommandForm struct {
 	Description *string `json:"description"`
 	InvokeCmd   string  `json:"invoke_cmd"`
-	Name        string  `json:"name"`
+	Name        *string `json:"name,omitempty"`
 	Variant     string  `json:"variant"`
 }
 
@@ -1072,12 +1192,13 @@ type ToolCreatorResponse struct {
 
 // ToolNodeSchema defines model for ToolNodeSchema.
 type ToolNodeSchema struct {
-	CommandVariant CommandVariantSchema   `json:"command_variant"`
-	Id             openapi_types.UUID     `json:"id"`
-	Inputs         []NodeConnectionSchema `json:"inputs"`
-	Outputs        []NodeConnectionSchema `json:"outputs"`
-	Type           WorkflowNodeType       `json:"type"`
-	UiOptions      map[string]interface{} `json:"ui_options"`
+	CommandVariant CommandVariantSchema        `json:"command_variant"`
+	Id             openapi_types.UUID          `json:"id"`
+	Inputs         []NodeConnectionSchema      `json:"inputs"`
+	Outputs        []NodeConnectionSchema      `json:"outputs"`
+	Parameters     *map[string]WrappedVariable `json:"parameters"`
+	Type           WorkflowNodeType            `json:"type"`
+	UiOptions      map[string]interface{}      `json:"ui_options"`
 }
 
 // ToolReleaseNodeSchema defines model for ToolReleaseNodeSchema.
@@ -1100,7 +1221,7 @@ type ToolSchema struct {
 	Creator          ToolCreatorResponse                   `json:"creator"`
 	DistributionType DistributionType                      `json:"distribution_type"`
 	Id               openapi_types.UUID                    `json:"id"`
-	LatestRelease    interface{}                           `json:"latest_release"`
+	LatestRelease    ServerRoutesToolsGetReleaseResponse   `json:"latest_release"`
 	Name             string                                `json:"name"`
 	Releases         []ServerRoutesToolsGetReleaseResponse `json:"releases"`
 	Type             ToolType                              `json:"type"`
@@ -1135,6 +1256,9 @@ type UserSchema struct {
 // UserType defines model for UserType.
 type UserType int
 
+// VariableType defines model for VariableType.
+type VariableType string
+
 // VariantResponseModel defines model for VariantResponseModel.
 type VariantResponseModel struct {
 	CompiledCommand *string     `json:"compiled_command,omitempty"`
@@ -1148,14 +1272,17 @@ type VariantResponseModel struct {
 // WorkflowCardResponse defines model for WorkflowCardResponse.
 type WorkflowCardResponse struct {
 	Creator    CreatorResponse    `json:"creator"`
+	Handle     string             `json:"handle"`
 	Id         openapi_types.UUID `json:"id"`
 	Name       string             `json:"name"`
+	Prefix     *string            `json:"prefix"`
 	Visibility WorkflowVisibility `json:"visibility"`
 }
 
 // WorkflowForm defines model for WorkflowForm.
 type WorkflowForm struct {
 	Description *string `json:"description,omitempty"`
+	Handle      string  `json:"handle"`
 	Name        string  `json:"name"`
 }
 
@@ -1167,24 +1294,68 @@ type WorkflowReleaseForm struct {
 	VersionTag string `json:"version_tag"`
 }
 
-// WorkflowResponse defines model for WorkflowResponse.
-type WorkflowResponse struct {
-	AccessLevel AccessLevel    `json:"access_level"`
-	Workflow    WorkflowSchema `json:"workflow"`
+// WorkflowReleaseSchema defines model for WorkflowReleaseSchema.
+type WorkflowReleaseSchema struct {
+	Id           openapi_types.UUID                `json:"id"`
+	ReleaseState ReleaseState                      `json:"release_state"`
+	VersionTag   string                            `json:"version_tag"`
+	Workflow     ServerRoutesRunsGetWorkflowSchema `json:"workflow"`
 }
 
-// WorkflowSchema defines model for WorkflowSchema.
-type WorkflowSchema struct {
-	Creator       CreatorResponse                           `json:"creator"`
-	Id            openapi_types.UUID                        `json:"id"`
-	LatestRelease interface{}                               `json:"latest_release"`
-	Name          string                                    `json:"name"`
-	Releases      []ServerRoutesWorkflowsGetReleaseResponse `json:"releases"`
-	Visibility    WorkflowVisibility                        `json:"visibility"`
+// WorkflowReleaseSearchResponseSchema defines model for WorkflowReleaseSearchResponseSchema.
+type WorkflowReleaseSearchResponseSchema struct {
+	Releases []WorkflowReleaseSearchSchema `json:"releases"`
+	Total    int                           `json:"total"`
+}
+
+// WorkflowReleaseSearchSchema defines model for WorkflowReleaseSearchSchema.
+type WorkflowReleaseSearchSchema struct {
+	Id         openapi_types.UUID   `json:"id"`
+	IsLatest   bool                 `json:"is_latest"`
+	VersionTag string               `json:"version_tag"`
+	Workflow   WorkflowSearchSchema `json:"workflow"`
+}
+
+// WorkflowResponse defines model for WorkflowResponse.
+type WorkflowResponse struct {
+	AccessLevel AccessLevel                            `json:"access_level"`
+	Workflow    ServerRoutesWorkflowsGetWorkflowSchema `json:"workflow"`
+}
+
+// WorkflowRunForm defines model for WorkflowRunForm.
+type WorkflowRunForm struct {
+	Name              string             `json:"name"`
+	WorkflowReleaseId openapi_types.UUID `json:"workflow_release_id"`
+}
+
+// WorkflowRunResponse defines model for WorkflowRunResponse.
+type WorkflowRunResponse struct {
+	AccessLevel AccessLevel       `json:"access_level"`
+	Run         WorkflowRunSchema `json:"run"`
+}
+
+// WorkflowRunSchema defines model for WorkflowRunSchema.
+type WorkflowRunSchema struct {
+	Id              openapi_types.UUID    `json:"id"`
+	Name            string                `json:"name"`
+	Status          RunStatus             `json:"status"`
+	WorkflowRelease WorkflowReleaseSchema `json:"workflow_release"`
+}
+
+// WorkflowSearchSchema defines model for WorkflowSearchSchema.
+type WorkflowSearchSchema struct {
+	Id   openapi_types.UUID `json:"id"`
+	Name string             `json:"name"`
 }
 
 // WorkflowVisibility defines model for WorkflowVisibility.
 type WorkflowVisibility string
+
+// WrappedVariable defines model for WrappedVariable.
+type WrappedVariable struct {
+	Type  VariableType `json:"type"`
+	Value interface{}  `json:"value"`
+}
 
 // ServerRoutesBucketsCreateBucketResponse defines model for server__routes__buckets__create__BucketResponse.
 type ServerRoutesBucketsCreateBucketResponse struct {
@@ -1226,6 +1397,18 @@ type ServerRoutesRegistryGetDockerImageResponse struct {
 	FetchStatus DockerImageFetchStatus `json:"fetch_status"`
 	SizeBytes   *int                   `json:"size_bytes"`
 	SourceType  DockerImageSourceType  `json:"source_type"`
+}
+
+// ServerRoutesRunsGetPagedResponse defines model for server__routes__runs__get__PagedResponse.
+type ServerRoutesRunsGetPagedResponse struct {
+	Items []WorkflowRunSchema `json:"items"`
+	Total int                 `json:"total"`
+}
+
+// ServerRoutesRunsGetWorkflowSchema defines model for server__routes__runs__get__WorkflowSchema.
+type ServerRoutesRunsGetWorkflowSchema struct {
+	Id   openapi_types.UUID `json:"id"`
+	Name string             `json:"name"`
 }
 
 // ServerRoutesToolsCreateToolForm defines model for server__routes__tools__create__ToolForm.
@@ -1291,6 +1474,14 @@ type ServerRoutesToolsReleasesGetCommandResponse struct {
 	Name string             `json:"name"`
 }
 
+// ServerRoutesToolsReleasesGetDockerImageResponse defines model for server__routes__tools__releases__get__DockerImageResponse.
+type ServerRoutesToolsReleasesGetDockerImageResponse struct {
+	Digest      string                 `json:"digest"`
+	FetchStatus DockerImageFetchStatus `json:"fetch_status"`
+	SizeBytes   *int                   `json:"size_bytes"`
+	SourceType  DockerImageSourceType  `json:"source_type"`
+}
+
 // ServerRoutesToolsReleasesGetReleaseResponse defines model for server__routes__tools__releases__get__ReleaseResponse.
 type ServerRoutesToolsReleasesGetReleaseResponse struct {
 	AccessLevel AccessLevel                               `json:"access_level"`
@@ -1303,7 +1494,7 @@ type ServerRoutesToolsReleasesGetReleaseSchema struct {
 	Commands     []ServerRoutesToolsReleasesGetCommandResponse `json:"commands"`
 	Id           openapi_types.UUID                            `json:"id"`
 	IsLatest     bool                                          `json:"is_latest"`
-	PackageImage interface{}                                   `json:"package_image"`
+	PackageImage PackageImageResponse                          `json:"package_image"`
 	ReleaseState ReleaseState                                  `json:"release_state"`
 	Tool         ServerRoutesToolsReleasesGetToolResponse      `json:"tool"`
 	VersionTag   string                                        `json:"version_tag"`
@@ -1328,6 +1519,18 @@ type ServerRoutesWorkflowsGetPagedResponse struct {
 type ServerRoutesWorkflowsGetReleaseResponse struct {
 	Id         openapi_types.UUID `json:"id"`
 	VersionTag string             `json:"version_tag"`
+}
+
+// ServerRoutesWorkflowsGetWorkflowSchema defines model for server__routes__workflows__get__WorkflowSchema.
+type ServerRoutesWorkflowsGetWorkflowSchema struct {
+	Creator       CreatorResponse                           `json:"creator"`
+	Handle        string                                    `json:"handle"`
+	Id            openapi_types.UUID                        `json:"id"`
+	LatestRelease ServerRoutesWorkflowsGetReleaseResponse   `json:"latest_release"`
+	Name          string                                    `json:"name"`
+	Prefix        *string                                   `json:"prefix"`
+	Releases      []ServerRoutesWorkflowsGetReleaseResponse `json:"releases"`
+	Visibility    WorkflowVisibility                        `json:"visibility"`
 }
 
 // ServerRoutesWorkflowsReleasesGetReleaseResponse defines model for server__routes__workflows__releases__get__ReleaseResponse.
@@ -1368,8 +1571,8 @@ type DeactivateApiTokenApiApiTokensDeactivatePostParams struct {
 	TokenId openapi_types.UUID `form:"token_id" json:"token_id"`
 
 	// UserId Filter API tokens by user ID (admin only)
-	UserId    *string `form:"user_id,omitempty" json:"user_id,omitempty"`
-	XAPIToken *string `json:"X-API-Token,omitempty"`
+	UserId    *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
+	XAPIToken *string             `json:"X-API-Token,omitempty"`
 }
 
 // GetApiTokensApiApiTokensPageGetParams defines parameters for GetApiTokensApiApiTokensPageGet.
@@ -1378,8 +1581,8 @@ type GetApiTokensApiApiTokensPageGetParams struct {
 	Page *int `form:"page,omitempty" json:"page,omitempty"`
 
 	// UserId Filter API tokens by user ID (admin only)
-	UserId    *string `form:"user_id,omitempty" json:"user_id,omitempty"`
-	XAPIToken *string `json:"X-API-Token,omitempty"`
+	UserId    *openapi_types.UUID `form:"user_id,omitempty" json:"user_id,omitempty"`
+	XAPIToken *string             `json:"X-API-Token,omitempty"`
 }
 
 // ApiTokenLoginApiAuthApiTokenLoginPostJSONBody defines parameters for ApiTokenLoginApiAuthApiTokenLoginPost.
@@ -1425,7 +1628,7 @@ type CreateRateApiPricingCreatePostParams struct {
 // GetRatesApiPricingGetGetParams defines parameters for GetRatesApiPricingGetGet.
 type GetRatesApiPricingGetGetParams struct {
 	// ServiceType Filter by service type
-	ServiceType interface{} `form:"service_type,omitempty" json:"service_type,omitempty"`
+	ServiceType *ServiceType `form:"service_type,omitempty" json:"service_type,omitempty"`
 }
 
 // ListDockerImagesApiRegistryListGetParams defines parameters for ListDockerImagesApiRegistryListGet.
@@ -1440,10 +1643,47 @@ type PullImageApiRegistryPullGetParams struct {
 	Ref *string `form:"ref,omitempty" json:"ref,omitempty"`
 
 	// ToolId ID of the tool to pull image for from latest release
-	ToolId *string `form:"tool_id,omitempty" json:"tool_id,omitempty"`
+	ToolId *openapi_types.UUID `form:"tool_id,omitempty" json:"tool_id,omitempty"`
 
 	// ReleaseId ID of the release to pull image for
-	ReleaseId *string `form:"release_id,omitempty" json:"release_id,omitempty"`
+	ReleaseId *openapi_types.UUID `form:"release_id,omitempty" json:"release_id,omitempty"`
+	XAPIToken *string             `json:"X-API-Token,omitempty"`
+}
+
+// CreateWorkflowRunApiRunsCreatePostParams defines parameters for CreateWorkflowRunApiRunsCreatePost.
+type CreateWorkflowRunApiRunsCreatePostParams struct {
+	XAPIToken *string `json:"X-API-Token,omitempty"`
+}
+
+// GetWorkflowRunsApiRunsPageGetParams defines parameters for GetWorkflowRunsApiRunsPageGet.
+type GetWorkflowRunsApiRunsPageGetParams struct {
+	// Page Page number for pagination (0-indexed)
+	Page      *int    `form:"page,omitempty" json:"page,omitempty"`
+	XAPIToken *string `json:"X-API-Token,omitempty"`
+}
+
+// DeleteWorkflowRunApiRunsRunIdDeleteParams defines parameters for DeleteWorkflowRunApiRunsRunIdDelete.
+type DeleteWorkflowRunApiRunsRunIdDeleteParams struct {
+	XAPIToken *string `json:"X-API-Token,omitempty"`
+}
+
+// GetWorkflowRunApiRunsRunIdGetParams defines parameters for GetWorkflowRunApiRunsRunIdGet.
+type GetWorkflowRunApiRunsRunIdGetParams struct {
+	XAPIToken *string `json:"X-API-Token,omitempty"`
+}
+
+// ValidateRunStartApiRunsRunIdStartPostParams defines parameters for ValidateRunStartApiRunsRunIdStartPost.
+type ValidateRunStartApiRunsRunIdStartPostParams struct {
+	XAPIToken *string `json:"X-API-Token,omitempty"`
+}
+
+// GetRunTasksApiRunsRunIdTasksGetParams defines parameters for GetRunTasksApiRunsRunIdTasksGet.
+type GetRunTasksApiRunsRunIdTasksGetParams struct {
+	XAPIToken *string `json:"X-API-Token,omitempty"`
+}
+
+// SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams defines parameters for SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPut.
+type SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams struct {
 	XAPIToken *string `json:"X-API-Token,omitempty"`
 }
 
@@ -1456,6 +1696,16 @@ type SearchIoSpecsApiSearchIoSpecsGetParams struct {
 // SearchToolsApiSearchVariantsGetParams defines parameters for SearchToolsApiSearchVariantsGet.
 type SearchToolsApiSearchVariantsGetParams struct {
 	// Word Search term for variants
+	Word string `form:"word" json:"word"`
+
+	// Page Page number for pagination
+	Page      *int    `form:"page,omitempty" json:"page,omitempty"`
+	XAPIToken *string `json:"X-API-Token,omitempty"`
+}
+
+// SearchWorkflowReleasesApiSearchWorkflowReleasesGetParams defines parameters for SearchWorkflowReleasesApiSearchWorkflowReleasesGet.
+type SearchWorkflowReleasesApiSearchWorkflowReleasesGetParams struct {
+	// Word Search term for workflow releases
 	Word string `form:"word" json:"word"`
 
 	// Page Page number for pagination
@@ -1480,8 +1730,8 @@ type GetToolsApiToolsPageGetParams struct {
 	Page *int `form:"page,omitempty" json:"page,omitempty"`
 
 	// CreatorId Filter tools by creator ID
-	CreatorId *string `form:"creator_id,omitempty" json:"creator_id,omitempty"`
-	XAPIToken *string `json:"X-API-Token,omitempty"`
+	CreatorId *openapi_types.UUID `form:"creator_id,omitempty" json:"creator_id,omitempty"`
+	XAPIToken *string             `json:"X-API-Token,omitempty"`
 }
 
 // GetToolApiToolsToolIdGetParams defines parameters for GetToolApiToolsToolIdGet.
@@ -1501,6 +1751,11 @@ type DeleteReleaseApiToolsToolIdReleasesReleaseIdDeleteParams struct {
 
 // GetReleaseApiToolsToolIdReleasesReleaseIdGetParams defines parameters for GetReleaseApiToolsToolIdReleasesReleaseIdGet.
 type GetReleaseApiToolsToolIdReleasesReleaseIdGetParams struct {
+	XAPIToken *string `json:"X-API-Token,omitempty"`
+}
+
+// AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostParams defines parameters for AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePost.
+type AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostParams struct {
 	XAPIToken *string `json:"X-API-Token,omitempty"`
 }
 
@@ -1603,7 +1858,7 @@ type GetWorkflowsApiWorkflowsPageGetParams struct {
 	Page *int `form:"page,omitempty" json:"page,omitempty"`
 
 	// CreatorId Filter workflows by creator ID
-	CreatorId *string `form:"creator_id,omitempty" json:"creator_id,omitempty"`
+	CreatorId *openapi_types.UUID `form:"creator_id,omitempty" json:"creator_id,omitempty"`
 }
 
 // GetWorkflowApiWorkflowsWorkflowIdGetParams defines parameters for GetWorkflowApiWorkflowsWorkflowIdGet.
@@ -1656,6 +1911,11 @@ type RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteParam
 	XAPIToken *string `json:"X-API-Token,omitempty"`
 }
 
+// SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams defines parameters for SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPut.
+type SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams struct {
+	XAPIToken *string `json:"X-API-Token,omitempty"`
+}
+
 // CreateApiTokenApiApiTokensCreatePostJSONRequestBody defines body for CreateApiTokenApiApiTokensCreatePost for application/json ContentType.
 type CreateApiTokenApiApiTokensCreatePostJSONRequestBody CreateAPITokenForm
 
@@ -1679,6 +1939,12 @@ type CreateIoSpecApiIoSpecsCreatePostJSONRequestBody IOSpecForm
 
 // CreateRateApiPricingCreatePostJSONRequestBody defines body for CreateRateApiPricingCreatePost for application/json ContentType.
 type CreateRateApiPricingCreatePostJSONRequestBody CreatePricingRateForm
+
+// CreateWorkflowRunApiRunsCreatePostJSONRequestBody defines body for CreateWorkflowRunApiRunsCreatePost for application/json ContentType.
+type CreateWorkflowRunApiRunsCreatePostJSONRequestBody WorkflowRunForm
+
+// SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutJSONRequestBody defines body for SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPut for application/json ContentType.
+type SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutJSONRequestBody SaveRunTaskParametersForm
 
 // CreateToolApiToolsCreatePostJSONRequestBody defines body for CreateToolApiToolsCreatePost for application/json ContentType.
 type CreateToolApiToolsCreatePostJSONRequestBody ServerRoutesToolsCreateToolForm
@@ -1742,6 +2008,9 @@ type RemoveConnectionApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveConnectio
 
 // RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteJSONRequestBody defines body for RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDelete for application/json ContentType.
 type RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteJSONRequestBody BodyRemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDelete
+
+// SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutJSONRequestBody defines body for SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPut for application/json ContentType.
+type SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutJSONRequestBody SaveNodeParametersForm
 
 // AsToolNodeSchema returns the union data inside the GraphResponseSchema_Nodes_Item as a ToolNodeSchema
 func (t GraphResponseSchema_Nodes_Item) AsToolNodeSchema() (ToolNodeSchema, error) {
@@ -1963,11 +2232,39 @@ type ClientInterface interface {
 	// GetClusterCapacityApiResourcesComputeAvailableGet request
 	GetClusterCapacityApiResourcesComputeAvailableGet(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreateWorkflowRunApiRunsCreatePostWithBody request with any body
+	CreateWorkflowRunApiRunsCreatePostWithBody(ctx context.Context, params *CreateWorkflowRunApiRunsCreatePostParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateWorkflowRunApiRunsCreatePost(ctx context.Context, params *CreateWorkflowRunApiRunsCreatePostParams, body CreateWorkflowRunApiRunsCreatePostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetWorkflowRunsApiRunsPageGet request
+	GetWorkflowRunsApiRunsPageGet(ctx context.Context, params *GetWorkflowRunsApiRunsPageGetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteWorkflowRunApiRunsRunIdDelete request
+	DeleteWorkflowRunApiRunsRunIdDelete(ctx context.Context, runId openapi_types.UUID, params *DeleteWorkflowRunApiRunsRunIdDeleteParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetWorkflowRunApiRunsRunIdGet request
+	GetWorkflowRunApiRunsRunIdGet(ctx context.Context, runId openapi_types.UUID, params *GetWorkflowRunApiRunsRunIdGetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ValidateRunStartApiRunsRunIdStartPost request
+	ValidateRunStartApiRunsRunIdStartPost(ctx context.Context, runId openapi_types.UUID, params *ValidateRunStartApiRunsRunIdStartPostParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetRunTasksApiRunsRunIdTasksGet request
+	GetRunTasksApiRunsRunIdTasksGet(ctx context.Context, runId openapi_types.UUID, params *GetRunTasksApiRunsRunIdTasksGetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutWithBody request with any body
+	SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutWithBody(ctx context.Context, runId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPut(ctx context.Context, runId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams, body SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// SearchIoSpecsApiSearchIoSpecsGet request
 	SearchIoSpecsApiSearchIoSpecsGet(ctx context.Context, params *SearchIoSpecsApiSearchIoSpecsGetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// SearchToolsApiSearchVariantsGet request
 	SearchToolsApiSearchVariantsGet(ctx context.Context, params *SearchToolsApiSearchVariantsGetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SearchWorkflowReleasesApiSearchWorkflowReleasesGet request
+	SearchWorkflowReleasesApiSearchWorkflowReleasesGet(ctx context.Context, params *SearchWorkflowReleasesApiSearchWorkflowReleasesGetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreateToolApiToolsCreatePostWithBody request with any body
 	CreateToolApiToolsCreatePostWithBody(ctx context.Context, params *CreateToolApiToolsCreatePostParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1993,6 +2290,9 @@ type ClientInterface interface {
 
 	// GetReleaseApiToolsToolIdReleasesReleaseIdGet request
 	GetReleaseApiToolsToolIdReleasesReleaseIdGet(ctx context.Context, toolId openapi_types.UUID, releaseId openapi_types.UUID, params *GetReleaseApiToolsToolIdReleasesReleaseIdGetParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePost request
+	AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePost(ctx context.Context, toolId openapi_types.UUID, releaseId openapi_types.UUID, params *AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ConfirmBinaryUploadApiToolsToolIdReleasesReleaseIdBinaryUploadCompletePostWithBody request with any body
 	ConfirmBinaryUploadApiToolsToolIdReleasesReleaseIdBinaryUploadCompletePostWithBody(ctx context.Context, toolId openapi_types.UUID, releaseId openapi_types.UUID, params *ConfirmBinaryUploadApiToolsToolIdReleasesReleaseIdBinaryUploadCompletePostParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -2118,6 +2418,11 @@ type ClientInterface interface {
 	RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteWithBody(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, params *RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDelete(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, params *RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteParams, body RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutWithBody request with any body
+	SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutWithBody(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPut(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams, body SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetBucketStatusApiAdminStatusBucketsBucketIdGet(ctx context.Context, bucketId openapi_types.UUID, params *GetBucketStatusApiAdminStatusBucketsBucketIdGetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -2492,6 +2797,114 @@ func (c *Client) GetClusterCapacityApiResourcesComputeAvailableGet(ctx context.C
 	return c.Client.Do(req)
 }
 
+func (c *Client) CreateWorkflowRunApiRunsCreatePostWithBody(ctx context.Context, params *CreateWorkflowRunApiRunsCreatePostParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateWorkflowRunApiRunsCreatePostRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateWorkflowRunApiRunsCreatePost(ctx context.Context, params *CreateWorkflowRunApiRunsCreatePostParams, body CreateWorkflowRunApiRunsCreatePostJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateWorkflowRunApiRunsCreatePostRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetWorkflowRunsApiRunsPageGet(ctx context.Context, params *GetWorkflowRunsApiRunsPageGetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetWorkflowRunsApiRunsPageGetRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteWorkflowRunApiRunsRunIdDelete(ctx context.Context, runId openapi_types.UUID, params *DeleteWorkflowRunApiRunsRunIdDeleteParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteWorkflowRunApiRunsRunIdDeleteRequest(c.Server, runId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetWorkflowRunApiRunsRunIdGet(ctx context.Context, runId openapi_types.UUID, params *GetWorkflowRunApiRunsRunIdGetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetWorkflowRunApiRunsRunIdGetRequest(c.Server, runId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ValidateRunStartApiRunsRunIdStartPost(ctx context.Context, runId openapi_types.UUID, params *ValidateRunStartApiRunsRunIdStartPostParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewValidateRunStartApiRunsRunIdStartPostRequest(c.Server, runId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetRunTasksApiRunsRunIdTasksGet(ctx context.Context, runId openapi_types.UUID, params *GetRunTasksApiRunsRunIdTasksGetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRunTasksApiRunsRunIdTasksGetRequest(c.Server, runId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutWithBody(ctx context.Context, runId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutRequestWithBody(c.Server, runId, nodeId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPut(ctx context.Context, runId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams, body SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutRequest(c.Server, runId, nodeId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) SearchIoSpecsApiSearchIoSpecsGet(ctx context.Context, params *SearchIoSpecsApiSearchIoSpecsGetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSearchIoSpecsApiSearchIoSpecsGetRequest(c.Server, params)
 	if err != nil {
@@ -2506,6 +2919,18 @@ func (c *Client) SearchIoSpecsApiSearchIoSpecsGet(ctx context.Context, params *S
 
 func (c *Client) SearchToolsApiSearchVariantsGet(ctx context.Context, params *SearchToolsApiSearchVariantsGetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSearchToolsApiSearchVariantsGetRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchWorkflowReleasesApiSearchWorkflowReleasesGet(ctx context.Context, params *SearchWorkflowReleasesApiSearchWorkflowReleasesGetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchWorkflowReleasesApiSearchWorkflowReleasesGetRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -2614,6 +3039,18 @@ func (c *Client) DeleteReleaseApiToolsToolIdReleasesReleaseIdDelete(ctx context.
 
 func (c *Client) GetReleaseApiToolsToolIdReleasesReleaseIdGet(ctx context.Context, toolId openapi_types.UUID, releaseId openapi_types.UUID, params *GetReleaseApiToolsToolIdReleasesReleaseIdGetParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetReleaseApiToolsToolIdReleasesReleaseIdGetRequest(c.Server, toolId, releaseId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePost(ctx context.Context, toolId openapi_types.UUID, releaseId openapi_types.UUID, params *AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostRequest(c.Server, toolId, releaseId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -3200,6 +3637,30 @@ func (c *Client) RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNod
 	return c.Client.Do(req)
 }
 
+func (c *Client) SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutWithBody(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutRequestWithBody(c.Server, workflowId, releaseId, nodeId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPut(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams, body SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutRequest(c.Server, workflowId, releaseId, nodeId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // NewGetBucketStatusApiAdminStatusBucketsBucketIdGetRequest generates requests for GetBucketStatusApiAdminStatusBucketsBucketIdGet
 func NewGetBucketStatusApiAdminStatusBucketsBucketIdGetRequest(server string, bucketId openapi_types.UUID, params *GetBucketStatusApiAdminStatusBucketsBucketIdGetParams) (*http.Request, error) {
 	var err error
@@ -3384,7 +3845,7 @@ func NewDeactivateApiTokenApiApiTokensDeactivatePostRequest(server string, param
 
 		if params.UserId != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "user_id", *params.UserId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "user_id", *params.UserId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -3465,7 +3926,7 @@ func NewGetApiTokensApiApiTokensPageGetRequest(server string, params *GetApiToke
 
 		if params.UserId != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "user_id", *params.UserId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "user_id", *params.UserId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -4103,12 +4564,16 @@ func NewGetRatesApiPricingGetGetRequest(server string, params *GetRatesApiPricin
 		// per the OpenAPI spec (e.g. "color=blue,black,brown").
 		var rawQueryFragments []string
 
-		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "service_type", params.ServiceType, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "", Format: ""}); err != nil {
-			return nil, err
-		} else {
-			for _, qp := range strings.Split(queryFrag, "&") {
-				rawQueryFragments = append(rawQueryFragments, qp)
+		if params.ServiceType != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "service_type", *params.ServiceType, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
 			}
+
 		}
 
 		if encoded := queryValues.Encode(); encoded != "" {
@@ -4255,7 +4720,7 @@ func NewPullImageApiRegistryPullGetRequest(server string, params *PullImageApiRe
 
 		if params.ToolId != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "tool_id", *params.ToolId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "tool_id", *params.ToolId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -4267,7 +4732,7 @@ func NewPullImageApiRegistryPullGetRequest(server string, params *PullImageApiRe
 
 		if params.ReleaseId != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "release_id", *params.ReleaseId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "release_id", *params.ReleaseId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -4333,6 +4798,395 @@ func NewGetClusterCapacityApiResourcesComputeAvailableGetRequest(server string) 
 	return req, nil
 }
 
+// NewCreateWorkflowRunApiRunsCreatePostRequest calls the generic CreateWorkflowRunApiRunsCreatePost builder with application/json body
+func NewCreateWorkflowRunApiRunsCreatePostRequest(server string, params *CreateWorkflowRunApiRunsCreatePostParams, body CreateWorkflowRunApiRunsCreatePostJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateWorkflowRunApiRunsCreatePostRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewCreateWorkflowRunApiRunsCreatePostRequestWithBody generates requests for CreateWorkflowRunApiRunsCreatePost with any type of body
+func NewCreateWorkflowRunApiRunsCreatePostRequestWithBody(server string, params *CreateWorkflowRunApiRunsCreatePostParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/runs/create")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		if params.XAPIToken != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-API-Token", *params.XAPIToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-API-Token", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetWorkflowRunsApiRunsPageGetRequest generates requests for GetWorkflowRunsApiRunsPageGet
+func NewGetWorkflowRunsApiRunsPageGetRequest(server string, params *GetWorkflowRunsApiRunsPageGetParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/runs/page")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "page", *params.Page, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XAPIToken != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-API-Token", *params.XAPIToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-API-Token", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewDeleteWorkflowRunApiRunsRunIdDeleteRequest generates requests for DeleteWorkflowRunApiRunsRunIdDelete
+func NewDeleteWorkflowRunApiRunsRunIdDeleteRequest(server string, runId openapi_types.UUID, params *DeleteWorkflowRunApiRunsRunIdDeleteParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "run_id", runId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/runs/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XAPIToken != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-API-Token", *params.XAPIToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-API-Token", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetWorkflowRunApiRunsRunIdGetRequest generates requests for GetWorkflowRunApiRunsRunIdGet
+func NewGetWorkflowRunApiRunsRunIdGetRequest(server string, runId openapi_types.UUID, params *GetWorkflowRunApiRunsRunIdGetParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "run_id", runId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/runs/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XAPIToken != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-API-Token", *params.XAPIToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-API-Token", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewValidateRunStartApiRunsRunIdStartPostRequest generates requests for ValidateRunStartApiRunsRunIdStartPost
+func NewValidateRunStartApiRunsRunIdStartPostRequest(server string, runId openapi_types.UUID, params *ValidateRunStartApiRunsRunIdStartPostParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "run_id", runId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/runs/%s/start", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XAPIToken != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-API-Token", *params.XAPIToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-API-Token", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewGetRunTasksApiRunsRunIdTasksGetRequest generates requests for GetRunTasksApiRunsRunIdTasksGet
+func NewGetRunTasksApiRunsRunIdTasksGetRequest(server string, runId openapi_types.UUID, params *GetRunTasksApiRunsRunIdTasksGetParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "run_id", runId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/runs/%s/tasks", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XAPIToken != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-API-Token", *params.XAPIToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-API-Token", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewSaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutRequest calls the generic SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPut builder with application/json body
+func NewSaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutRequest(server string, runId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams, body SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutRequestWithBody(server, runId, nodeId, params, "application/json", bodyReader)
+}
+
+// NewSaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutRequestWithBody generates requests for SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPut with any type of body
+func NewSaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutRequestWithBody(server string, runId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "run_id", runId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "node_id", nodeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/runs/%s/tasks/%s/parameters", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		if params.XAPIToken != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-API-Token", *params.XAPIToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-API-Token", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 // NewSearchIoSpecsApiSearchIoSpecsGetRequest generates requests for SearchIoSpecsApiSearchIoSpecsGet
 func NewSearchIoSpecsApiSearchIoSpecsGetRequest(server string, params *SearchIoSpecsApiSearchIoSpecsGetParams) (*http.Request, error) {
 	var err error
@@ -4393,6 +5247,83 @@ func NewSearchToolsApiSearchVariantsGetRequest(server string, params *SearchTool
 	}
 
 	operationPath := fmt.Sprintf("/api/search-variants")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "word", params.Word, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if params.Page != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "page", *params.Page, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XAPIToken != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-API-Token", *params.XAPIToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-API-Token", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewSearchWorkflowReleasesApiSearchWorkflowReleasesGetRequest generates requests for SearchWorkflowReleasesApiSearchWorkflowReleasesGet
+func NewSearchWorkflowReleasesApiSearchWorkflowReleasesGetRequest(server string, params *SearchWorkflowReleasesApiSearchWorkflowReleasesGetParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/search-workflow-releases")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -4611,7 +5542,7 @@ func NewGetToolsApiToolsPageGetRequest(server string, params *GetToolsApiToolsPa
 
 		if params.CreatorId != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "creator_id", *params.CreatorId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "creator_id", *params.CreatorId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -4851,6 +5782,62 @@ func NewGetReleaseApiToolsToolIdReleasesReleaseIdGetRequest(server string, toolI
 	}
 
 	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.XAPIToken != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-API-Token", *params.XAPIToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-API-Token", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewAutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostRequest generates requests for AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePost
+func NewAutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostRequest(server string, toolId openapi_types.UUID, releaseId openapi_types.UUID, params *AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "tool_id", toolId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "release_id", releaseId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/tools/%s/releases/%s/auto-compile", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -6218,7 +7205,7 @@ func NewGetWorkflowsApiWorkflowsPageGetRequest(server string, params *GetWorkflo
 
 		if params.CreatorId != nil {
 
-			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "creator_id", *params.CreatorId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "creator_id", *params.CreatorId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "uuid"}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -6866,6 +7853,82 @@ func NewRemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteRe
 	return req, nil
 }
 
+// NewSaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutRequest calls the generic SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPut builder with application/json body
+func NewSaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutRequest(server string, workflowId openapi_types.UUID, releaseId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams, body SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutRequestWithBody(server, workflowId, releaseId, nodeId, params, "application/json", bodyReader)
+}
+
+// NewSaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutRequestWithBody generates requests for SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPut with any type of body
+func NewSaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutRequestWithBody(server string, workflowId openapi_types.UUID, releaseId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "workflow_id", workflowId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "release_id", releaseId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithOptions("simple", false, "node_id", nodeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/workflows/%s/releases/%s/nodes/%s/parameters", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		if params.XAPIToken != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "X-API-Token", *params.XAPIToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-API-Token", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -6994,11 +8057,39 @@ type ClientWithResponsesInterface interface {
 	// GetClusterCapacityApiResourcesComputeAvailableGetWithResponse request
 	GetClusterCapacityApiResourcesComputeAvailableGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetClusterCapacityApiResourcesComputeAvailableGetResponse, error)
 
+	// CreateWorkflowRunApiRunsCreatePostWithBodyWithResponse request with any body
+	CreateWorkflowRunApiRunsCreatePostWithBodyWithResponse(ctx context.Context, params *CreateWorkflowRunApiRunsCreatePostParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkflowRunApiRunsCreatePostResponse, error)
+
+	CreateWorkflowRunApiRunsCreatePostWithResponse(ctx context.Context, params *CreateWorkflowRunApiRunsCreatePostParams, body CreateWorkflowRunApiRunsCreatePostJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWorkflowRunApiRunsCreatePostResponse, error)
+
+	// GetWorkflowRunsApiRunsPageGetWithResponse request
+	GetWorkflowRunsApiRunsPageGetWithResponse(ctx context.Context, params *GetWorkflowRunsApiRunsPageGetParams, reqEditors ...RequestEditorFn) (*GetWorkflowRunsApiRunsPageGetResponse, error)
+
+	// DeleteWorkflowRunApiRunsRunIdDeleteWithResponse request
+	DeleteWorkflowRunApiRunsRunIdDeleteWithResponse(ctx context.Context, runId openapi_types.UUID, params *DeleteWorkflowRunApiRunsRunIdDeleteParams, reqEditors ...RequestEditorFn) (*DeleteWorkflowRunApiRunsRunIdDeleteResponse, error)
+
+	// GetWorkflowRunApiRunsRunIdGetWithResponse request
+	GetWorkflowRunApiRunsRunIdGetWithResponse(ctx context.Context, runId openapi_types.UUID, params *GetWorkflowRunApiRunsRunIdGetParams, reqEditors ...RequestEditorFn) (*GetWorkflowRunApiRunsRunIdGetResponse, error)
+
+	// ValidateRunStartApiRunsRunIdStartPostWithResponse request
+	ValidateRunStartApiRunsRunIdStartPostWithResponse(ctx context.Context, runId openapi_types.UUID, params *ValidateRunStartApiRunsRunIdStartPostParams, reqEditors ...RequestEditorFn) (*ValidateRunStartApiRunsRunIdStartPostResponse, error)
+
+	// GetRunTasksApiRunsRunIdTasksGetWithResponse request
+	GetRunTasksApiRunsRunIdTasksGetWithResponse(ctx context.Context, runId openapi_types.UUID, params *GetRunTasksApiRunsRunIdTasksGetParams, reqEditors ...RequestEditorFn) (*GetRunTasksApiRunsRunIdTasksGetResponse, error)
+
+	// SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutWithBodyWithResponse request with any body
+	SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutWithBodyWithResponse(ctx context.Context, runId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse, error)
+
+	SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutWithResponse(ctx context.Context, runId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams, body SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse, error)
+
 	// SearchIoSpecsApiSearchIoSpecsGetWithResponse request
 	SearchIoSpecsApiSearchIoSpecsGetWithResponse(ctx context.Context, params *SearchIoSpecsApiSearchIoSpecsGetParams, reqEditors ...RequestEditorFn) (*SearchIoSpecsApiSearchIoSpecsGetResponse, error)
 
 	// SearchToolsApiSearchVariantsGetWithResponse request
 	SearchToolsApiSearchVariantsGetWithResponse(ctx context.Context, params *SearchToolsApiSearchVariantsGetParams, reqEditors ...RequestEditorFn) (*SearchToolsApiSearchVariantsGetResponse, error)
+
+	// SearchWorkflowReleasesApiSearchWorkflowReleasesGetWithResponse request
+	SearchWorkflowReleasesApiSearchWorkflowReleasesGetWithResponse(ctx context.Context, params *SearchWorkflowReleasesApiSearchWorkflowReleasesGetParams, reqEditors ...RequestEditorFn) (*SearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse, error)
 
 	// CreateToolApiToolsCreatePostWithBodyWithResponse request with any body
 	CreateToolApiToolsCreatePostWithBodyWithResponse(ctx context.Context, params *CreateToolApiToolsCreatePostParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateToolApiToolsCreatePostResponse, error)
@@ -7024,6 +8115,9 @@ type ClientWithResponsesInterface interface {
 
 	// GetReleaseApiToolsToolIdReleasesReleaseIdGetWithResponse request
 	GetReleaseApiToolsToolIdReleasesReleaseIdGetWithResponse(ctx context.Context, toolId openapi_types.UUID, releaseId openapi_types.UUID, params *GetReleaseApiToolsToolIdReleasesReleaseIdGetParams, reqEditors ...RequestEditorFn) (*GetReleaseApiToolsToolIdReleasesReleaseIdGetResponse, error)
+
+	// AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostWithResponse request
+	AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostWithResponse(ctx context.Context, toolId openapi_types.UUID, releaseId openapi_types.UUID, params *AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostParams, reqEditors ...RequestEditorFn) (*AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse, error)
 
 	// ConfirmBinaryUploadApiToolsToolIdReleasesReleaseIdBinaryUploadCompletePostWithBodyWithResponse request with any body
 	ConfirmBinaryUploadApiToolsToolIdReleasesReleaseIdBinaryUploadCompletePostWithBodyWithResponse(ctx context.Context, toolId openapi_types.UUID, releaseId openapi_types.UUID, params *ConfirmBinaryUploadApiToolsToolIdReleasesReleaseIdBinaryUploadCompletePostParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConfirmBinaryUploadApiToolsToolIdReleasesReleaseIdBinaryUploadCompletePostResponse, error)
@@ -7149,6 +8243,11 @@ type ClientWithResponsesInterface interface {
 	RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteWithBodyWithResponse(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, params *RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteResponse, error)
 
 	RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteWithResponse(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, params *RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteParams, body RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteJSONRequestBody, reqEditors ...RequestEditorFn) (*RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteResponse, error)
+
+	// SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutWithBodyWithResponse request with any body
+	SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutWithBodyWithResponse(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse, error)
+
+	SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutWithResponse(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams, body SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse, error)
 }
 
 type GetBucketStatusApiAdminStatusBucketsBucketIdGetResponse struct {
@@ -7156,6 +8255,7 @@ type GetBucketStatusApiAdminStatusBucketsBucketIdGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServiceStatus
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7189,6 +8289,7 @@ type GetServicesStatusApiAdminStatusServicesGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServicesStatusResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7222,6 +8323,7 @@ type CreateApiTokenApiApiTokensCreatePostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *CreateAPITokenResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7255,6 +8357,7 @@ type DeactivateApiTokenApiApiTokensDeactivatePostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7288,6 +8391,7 @@ type GetApiTokensApiApiTokensPageGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *PagedAPITokensResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7321,6 +8425,7 @@ type ApiTokenLoginApiAuthApiTokenLoginPostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *LoginResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7354,6 +8459,7 @@ type ApiTokenAuthenticateApiAuthApiTokenMeGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *AuthResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7387,6 +8493,7 @@ type LoginApiAuthLoginPostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *LoginResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7420,6 +8527,7 @@ type AuthenticateApiAuthMeGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *AuthResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7453,6 +8561,7 @@ type SignupApiAuthSignupPostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7486,6 +8595,7 @@ type ConfirmS3UploadApiBucketsConfirmS3UploadPostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7519,6 +8629,7 @@ type CreateBucketApiBucketsCreatePostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesBucketsCreateBucketResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7552,6 +8663,7 @@ type GetBucketsApiBucketsGetGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesBucketsGetResponseModel
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7585,6 +8697,7 @@ type LambdaApiHealthGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7618,6 +8731,7 @@ type InvalidateCacheApiInvalidateCacheGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7651,6 +8765,7 @@ type CreateIoSpecApiIoSpecsCreatePostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *CreateIOSpecResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7684,6 +8799,7 @@ type GetExploreIoSpecsApiIoSpecsExploreGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesIoSpecsExplorePagedResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7717,6 +8833,7 @@ type CreateRateApiPricingCreatePostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *CreatePricingRateResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7750,6 +8867,7 @@ type GetRatesApiPricingGetGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesPricingGetResponseModel
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7783,6 +8901,7 @@ type GetRateApiPricingPricingRateIdGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *PricingRateResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7816,6 +8935,7 @@ type ListDockerImagesApiRegistryListGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *DockerImagePaginatedResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7849,6 +8969,7 @@ type PullImageApiRegistryPullGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *RegistryImagePullResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7882,6 +9003,7 @@ type GetClusterCapacityApiResourcesComputeAvailableGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *[]NodeCapacity
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7910,11 +9032,250 @@ func (r GetClusterCapacityApiResourcesComputeAvailableGetResponse) ContentType()
 	return ""
 }
 
+type CreateWorkflowRunApiRunsCreatePostResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CreateWorkflowRunResponse
+	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
+	JSON422      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateWorkflowRunApiRunsCreatePostResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateWorkflowRunApiRunsCreatePostResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateWorkflowRunApiRunsCreatePostResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetWorkflowRunsApiRunsPageGetResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ServerRoutesRunsGetPagedResponse
+	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
+	JSON422      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetWorkflowRunsApiRunsPageGetResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetWorkflowRunsApiRunsPageGetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetWorkflowRunsApiRunsPageGetResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type DeleteWorkflowRunApiRunsRunIdDeleteResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *interface{}
+	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
+	JSON422      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteWorkflowRunApiRunsRunIdDeleteResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteWorkflowRunApiRunsRunIdDeleteResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DeleteWorkflowRunApiRunsRunIdDeleteResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetWorkflowRunApiRunsRunIdGetResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkflowRunResponse
+	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
+	JSON422      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetWorkflowRunApiRunsRunIdGetResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetWorkflowRunApiRunsRunIdGetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetWorkflowRunApiRunsRunIdGetResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ValidateRunStartApiRunsRunIdStartPostResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *StartValidationResponse
+	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
+	JSON422      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ValidateRunStartApiRunsRunIdStartPostResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ValidateRunStartApiRunsRunIdStartPostResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ValidateRunStartApiRunsRunIdStartPostResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetRunTasksApiRunsRunIdTasksGetResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RunTasksResponse
+	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
+	JSON422      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRunTasksApiRunsRunIdTasksGetResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRunTasksApiRunsRunIdTasksGetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetRunTasksApiRunsRunIdTasksGetResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SaveRunTaskParametersResponse
+	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
+	JSON422      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type SearchIoSpecsApiSearchIoSpecsGetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]IOSpecSearchResponseSchema
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7948,6 +9309,7 @@ type SearchToolsApiSearchVariantsGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *CommandVariantSearchResponseSchema
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -7976,11 +9338,46 @@ func (r SearchToolsApiSearchVariantsGetResponse) ContentType() string {
 	return ""
 }
 
+type SearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkflowReleaseSearchResponseSchema
+	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
+	JSON422      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r SearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type CreateToolApiToolsCreatePostResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *CreateToolResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8014,6 +9411,7 @@ type GetExploreToolsApiToolsExploreGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesToolsGetPagedResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8047,6 +9445,7 @@ type GetToolsApiToolsPageGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesToolsGetPagedResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8080,6 +9479,7 @@ type GetToolApiToolsToolIdGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesToolsGetToolResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8113,6 +9513,7 @@ type CreateReleaseApiToolsToolIdReleasesCreatePostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *CreateToolReleaseResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8146,6 +9547,7 @@ type DeleteReleaseApiToolsToolIdReleasesReleaseIdDeleteResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8179,6 +9581,7 @@ type GetReleaseApiToolsToolIdReleasesReleaseIdGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesToolsReleasesGetReleaseResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8207,11 +9610,46 @@ func (r GetReleaseApiToolsToolIdReleasesReleaseIdGetResponse) ContentType() stri
 	return ""
 }
 
+type AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *interface{}
+	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
+	JSON422      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ConfirmBinaryUploadApiToolsToolIdReleasesReleaseIdBinaryUploadCompletePostResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8245,6 +9683,7 @@ type GetBinaryUploadUrlApiToolsToolIdReleasesReleaseIdBinaryUploadUrlPostRespons
 	HTTPResponse *http.Response
 	JSON200      *PresignedURLResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8278,6 +9717,7 @@ type CreateCommandApiToolsToolIdReleasesReleaseIdCommandsCreatePostResponse stru
 	HTTPResponse *http.Response
 	JSON200      *CreateToolCommandResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8311,6 +9751,7 @@ type GetCommandApiToolsToolIdReleasesReleaseIdCommandsCommandIdGetResponse struc
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesToolsReleasesCommandsGetCommandResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8344,6 +9785,7 @@ type AddIoSpecApiToolsToolIdReleasesReleaseIdCommandsCommandIdAddIoSpecPatchResp
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8377,6 +9819,7 @@ type CreateVariantApiToolsToolIdReleasesReleaseIdCommandsCommandIdCreateVariantP
 	HTTPResponse *http.Response
 	JSON200      *CreateCommandVariantResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8410,6 +9853,7 @@ type SaveCommandConfigApiToolsToolIdReleasesReleaseIdCommandsCommandIdSaveConfig
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8443,6 +9887,7 @@ type GetVariantApiToolsToolIdReleasesReleaseIdCommandsCommandIdVariantGetRespons
 	HTTPResponse *http.Response
 	JSON200      *VariantResponseModel
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8476,6 +9921,7 @@ type AddBooleanParameterApiToolsToolIdReleasesReleaseIdCommandsCommandIdVariantA
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8509,6 +9955,7 @@ type AddNumericParameterApiToolsToolIdReleasesReleaseIdCommandsCommandIdVariantA
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8542,6 +9989,7 @@ type AddPathParameterApiToolsToolIdReleasesReleaseIdCommandsCommandIdVariantAddP
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8575,6 +10023,7 @@ type AddStringParameterApiToolsToolIdReleasesReleaseIdCommandsCommandIdVariantAd
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8608,6 +10057,7 @@ type DeleteParameterApiToolsToolIdReleasesReleaseIdCommandsCommandIdVariantDelet
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8641,6 +10091,7 @@ type EditVariantApiToolsToolIdReleasesReleaseIdCommandsCommandIdVariantEditPatch
 	HTTPResponse *http.Response
 	JSON200      *CreateCommandVariantResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8674,6 +10125,7 @@ type SelectDockerImageApiToolsToolIdReleasesReleaseIdSelectDockerImagePostRespon
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8707,6 +10159,7 @@ type GetUserApiUsersUserIdGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *UserResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8740,6 +10193,7 @@ type CreateWorkflowApiWorkflowsCreatePostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *CreateWorkflowResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8773,6 +10227,7 @@ type GetExploreWorkflowsApiWorkflowsExploreGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesWorkflowsGetPagedResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8806,6 +10261,7 @@ type GetWorkflowsApiWorkflowsPageGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesWorkflowsGetPagedResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8839,6 +10295,7 @@ type GetWorkflowApiWorkflowsWorkflowIdGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *WorkflowResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8872,6 +10329,7 @@ type CreateReleaseApiWorkflowsWorkflowIdReleasesCreatePostResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *CreateWorkflowReleaseResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8905,6 +10363,7 @@ type DeleteWorkflowReleaseApiWorkflowsWorkflowIdReleasesReleaseIdDeleteResponse 
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8938,6 +10397,7 @@ type GetReleaseApiWorkflowsWorkflowIdReleasesReleaseIdGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ServerRoutesWorkflowsReleasesGetReleaseResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -8971,6 +10431,7 @@ type EditWorkflowReleaseApiWorkflowsWorkflowIdReleasesReleaseIdEditPatchResponse
 	HTTPResponse *http.Response
 	JSON200      *EditWorkflowReleaseResponse
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -9004,6 +10465,7 @@ type GetGraphApiWorkflowsWorkflowIdReleasesReleaseIdGraphGetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *GraphResponseSchema
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -9037,6 +10499,7 @@ type AddToolApiWorkflowsWorkflowIdReleasesReleaseIdNodesAddToolPostResponse stru
 	HTTPResponse *http.Response
 	JSON200      *ToolNodeSchema
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -9070,6 +10533,7 @@ type ConnectNodesApiWorkflowsWorkflowIdReleasesReleaseIdNodesConnectPostResponse
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -9103,6 +10567,7 @@ type RemoveConnectionApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveConnectio
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -9136,6 +10601,7 @@ type RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteRespo
 	HTTPResponse *http.Response
 	JSON200      *interface{}
 	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
 	JSON422      *ErrorResponse
 	JSON500      *ErrorResponse
 }
@@ -9158,6 +10624,40 @@ func (r RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteRe
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SaveNodeParametersResponse
+	JSON404      *ErrorResponse
+	JSON409      *ErrorResponse
+	JSON422      *ErrorResponse
+	JSON500      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -9435,6 +10935,85 @@ func (c *ClientWithResponses) GetClusterCapacityApiResourcesComputeAvailableGetW
 	return ParseGetClusterCapacityApiResourcesComputeAvailableGetResponse(rsp)
 }
 
+// CreateWorkflowRunApiRunsCreatePostWithBodyWithResponse request with arbitrary body returning *CreateWorkflowRunApiRunsCreatePostResponse
+func (c *ClientWithResponses) CreateWorkflowRunApiRunsCreatePostWithBodyWithResponse(ctx context.Context, params *CreateWorkflowRunApiRunsCreatePostParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateWorkflowRunApiRunsCreatePostResponse, error) {
+	rsp, err := c.CreateWorkflowRunApiRunsCreatePostWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateWorkflowRunApiRunsCreatePostResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateWorkflowRunApiRunsCreatePostWithResponse(ctx context.Context, params *CreateWorkflowRunApiRunsCreatePostParams, body CreateWorkflowRunApiRunsCreatePostJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateWorkflowRunApiRunsCreatePostResponse, error) {
+	rsp, err := c.CreateWorkflowRunApiRunsCreatePost(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateWorkflowRunApiRunsCreatePostResponse(rsp)
+}
+
+// GetWorkflowRunsApiRunsPageGetWithResponse request returning *GetWorkflowRunsApiRunsPageGetResponse
+func (c *ClientWithResponses) GetWorkflowRunsApiRunsPageGetWithResponse(ctx context.Context, params *GetWorkflowRunsApiRunsPageGetParams, reqEditors ...RequestEditorFn) (*GetWorkflowRunsApiRunsPageGetResponse, error) {
+	rsp, err := c.GetWorkflowRunsApiRunsPageGet(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetWorkflowRunsApiRunsPageGetResponse(rsp)
+}
+
+// DeleteWorkflowRunApiRunsRunIdDeleteWithResponse request returning *DeleteWorkflowRunApiRunsRunIdDeleteResponse
+func (c *ClientWithResponses) DeleteWorkflowRunApiRunsRunIdDeleteWithResponse(ctx context.Context, runId openapi_types.UUID, params *DeleteWorkflowRunApiRunsRunIdDeleteParams, reqEditors ...RequestEditorFn) (*DeleteWorkflowRunApiRunsRunIdDeleteResponse, error) {
+	rsp, err := c.DeleteWorkflowRunApiRunsRunIdDelete(ctx, runId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteWorkflowRunApiRunsRunIdDeleteResponse(rsp)
+}
+
+// GetWorkflowRunApiRunsRunIdGetWithResponse request returning *GetWorkflowRunApiRunsRunIdGetResponse
+func (c *ClientWithResponses) GetWorkflowRunApiRunsRunIdGetWithResponse(ctx context.Context, runId openapi_types.UUID, params *GetWorkflowRunApiRunsRunIdGetParams, reqEditors ...RequestEditorFn) (*GetWorkflowRunApiRunsRunIdGetResponse, error) {
+	rsp, err := c.GetWorkflowRunApiRunsRunIdGet(ctx, runId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetWorkflowRunApiRunsRunIdGetResponse(rsp)
+}
+
+// ValidateRunStartApiRunsRunIdStartPostWithResponse request returning *ValidateRunStartApiRunsRunIdStartPostResponse
+func (c *ClientWithResponses) ValidateRunStartApiRunsRunIdStartPostWithResponse(ctx context.Context, runId openapi_types.UUID, params *ValidateRunStartApiRunsRunIdStartPostParams, reqEditors ...RequestEditorFn) (*ValidateRunStartApiRunsRunIdStartPostResponse, error) {
+	rsp, err := c.ValidateRunStartApiRunsRunIdStartPost(ctx, runId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseValidateRunStartApiRunsRunIdStartPostResponse(rsp)
+}
+
+// GetRunTasksApiRunsRunIdTasksGetWithResponse request returning *GetRunTasksApiRunsRunIdTasksGetResponse
+func (c *ClientWithResponses) GetRunTasksApiRunsRunIdTasksGetWithResponse(ctx context.Context, runId openapi_types.UUID, params *GetRunTasksApiRunsRunIdTasksGetParams, reqEditors ...RequestEditorFn) (*GetRunTasksApiRunsRunIdTasksGetResponse, error) {
+	rsp, err := c.GetRunTasksApiRunsRunIdTasksGet(ctx, runId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRunTasksApiRunsRunIdTasksGetResponse(rsp)
+}
+
+// SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutWithBodyWithResponse request with arbitrary body returning *SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse
+func (c *ClientWithResponses) SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutWithBodyWithResponse(ctx context.Context, runId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse, error) {
+	rsp, err := c.SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutWithBody(ctx, runId, nodeId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse(rsp)
+}
+
+func (c *ClientWithResponses) SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutWithResponse(ctx context.Context, runId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutParams, body SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse, error) {
+	rsp, err := c.SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPut(ctx, runId, nodeId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse(rsp)
+}
+
 // SearchIoSpecsApiSearchIoSpecsGetWithResponse request returning *SearchIoSpecsApiSearchIoSpecsGetResponse
 func (c *ClientWithResponses) SearchIoSpecsApiSearchIoSpecsGetWithResponse(ctx context.Context, params *SearchIoSpecsApiSearchIoSpecsGetParams, reqEditors ...RequestEditorFn) (*SearchIoSpecsApiSearchIoSpecsGetResponse, error) {
 	rsp, err := c.SearchIoSpecsApiSearchIoSpecsGet(ctx, params, reqEditors...)
@@ -9451,6 +11030,15 @@ func (c *ClientWithResponses) SearchToolsApiSearchVariantsGetWithResponse(ctx co
 		return nil, err
 	}
 	return ParseSearchToolsApiSearchVariantsGetResponse(rsp)
+}
+
+// SearchWorkflowReleasesApiSearchWorkflowReleasesGetWithResponse request returning *SearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse
+func (c *ClientWithResponses) SearchWorkflowReleasesApiSearchWorkflowReleasesGetWithResponse(ctx context.Context, params *SearchWorkflowReleasesApiSearchWorkflowReleasesGetParams, reqEditors ...RequestEditorFn) (*SearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse, error) {
+	rsp, err := c.SearchWorkflowReleasesApiSearchWorkflowReleasesGet(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse(rsp)
 }
 
 // CreateToolApiToolsCreatePostWithBodyWithResponse request with arbitrary body returning *CreateToolApiToolsCreatePostResponse
@@ -9530,6 +11118,15 @@ func (c *ClientWithResponses) GetReleaseApiToolsToolIdReleasesReleaseIdGetWithRe
 		return nil, err
 	}
 	return ParseGetReleaseApiToolsToolIdReleasesReleaseIdGetResponse(rsp)
+}
+
+// AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostWithResponse request returning *AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse
+func (c *ClientWithResponses) AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostWithResponse(ctx context.Context, toolId openapi_types.UUID, releaseId openapi_types.UUID, params *AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostParams, reqEditors ...RequestEditorFn) (*AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse, error) {
+	rsp, err := c.AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePost(ctx, toolId, releaseId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse(rsp)
 }
 
 // ConfirmBinaryUploadApiToolsToolIdReleasesReleaseIdBinaryUploadCompletePostWithBodyWithResponse request with arbitrary body returning *ConfirmBinaryUploadApiToolsToolIdReleasesReleaseIdBinaryUploadCompletePostResponse
@@ -9945,6 +11542,23 @@ func (c *ClientWithResponses) RemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdN
 	return ParseRemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDeleteResponse(rsp)
 }
 
+// SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutWithBodyWithResponse request with arbitrary body returning *SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse
+func (c *ClientWithResponses) SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutWithBodyWithResponse(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse, error) {
+	rsp, err := c.SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutWithBody(ctx, workflowId, releaseId, nodeId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse(rsp)
+}
+
+func (c *ClientWithResponses) SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutWithResponse(ctx context.Context, workflowId openapi_types.UUID, releaseId openapi_types.UUID, nodeId openapi_types.UUID, params *SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutParams, body SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutJSONRequestBody, reqEditors ...RequestEditorFn) (*SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse, error) {
+	rsp, err := c.SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPut(ctx, workflowId, releaseId, nodeId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse(rsp)
+}
+
 // ParseGetBucketStatusApiAdminStatusBucketsBucketIdGetResponse parses an HTTP response from a GetBucketStatusApiAdminStatusBucketsBucketIdGetWithResponse call
 func ParseGetBucketStatusApiAdminStatusBucketsBucketIdGetResponse(rsp *http.Response) (*GetBucketStatusApiAdminStatusBucketsBucketIdGetResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -9972,6 +11586,13 @@ func ParseGetBucketStatusApiAdminStatusBucketsBucketIdGetResponse(rsp *http.Resp
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -10020,6 +11641,13 @@ func ParseGetServicesStatusApiAdminStatusServicesGetResponse(rsp *http.Response)
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -10066,6 +11694,13 @@ func ParseCreateApiTokenApiApiTokensCreatePostResponse(rsp *http.Response) (*Cre
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -10114,6 +11749,13 @@ func ParseDeactivateApiTokenApiApiTokensDeactivatePostResponse(rsp *http.Respons
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -10160,6 +11802,13 @@ func ParseGetApiTokensApiApiTokensPageGetResponse(rsp *http.Response) (*GetApiTo
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -10208,6 +11857,13 @@ func ParseApiTokenLoginApiAuthApiTokenLoginPostResponse(rsp *http.Response) (*Ap
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -10254,6 +11910,13 @@ func ParseApiTokenAuthenticateApiAuthApiTokenMeGetResponse(rsp *http.Response) (
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -10302,6 +11965,13 @@ func ParseLoginApiAuthLoginPostResponse(rsp *http.Response) (*LoginApiAuthLoginP
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -10348,6 +12018,13 @@ func ParseAuthenticateApiAuthMeGetResponse(rsp *http.Response) (*AuthenticateApi
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -10396,6 +12073,13 @@ func ParseSignupApiAuthSignupPostResponse(rsp *http.Response) (*SignupApiAuthSig
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -10442,6 +12126,13 @@ func ParseConfirmS3UploadApiBucketsConfirmS3UploadPostResponse(rsp *http.Respons
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -10490,6 +12181,13 @@ func ParseCreateBucketApiBucketsCreatePostResponse(rsp *http.Response) (*CreateB
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -10536,6 +12234,13 @@ func ParseGetBucketsApiBucketsGetGetResponse(rsp *http.Response) (*GetBucketsApi
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -10584,6 +12289,13 @@ func ParseLambdaApiHealthGetResponse(rsp *http.Response) (*LambdaApiHealthGetRes
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -10630,6 +12342,13 @@ func ParseInvalidateCacheApiInvalidateCacheGetResponse(rsp *http.Response) (*Inv
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -10678,6 +12397,13 @@ func ParseCreateIoSpecApiIoSpecsCreatePostResponse(rsp *http.Response) (*CreateI
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -10724,6 +12450,13 @@ func ParseGetExploreIoSpecsApiIoSpecsExploreGetResponse(rsp *http.Response) (*Ge
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -10772,6 +12505,13 @@ func ParseCreateRateApiPricingCreatePostResponse(rsp *http.Response) (*CreateRat
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -10818,6 +12558,13 @@ func ParseGetRatesApiPricingGetGetResponse(rsp *http.Response) (*GetRatesApiPric
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -10866,6 +12613,13 @@ func ParseGetRateApiPricingPricingRateIdGetResponse(rsp *http.Response) (*GetRat
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -10912,6 +12666,13 @@ func ParseListDockerImagesApiRegistryListGetResponse(rsp *http.Response) (*ListD
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -10960,6 +12721,13 @@ func ParsePullImageApiRegistryPullGetResponse(rsp *http.Response) (*PullImageApi
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -11006,6 +12774,391 @@ func ParseGetClusterCapacityApiResourcesComputeAvailableGetResponse(rsp *http.Re
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateWorkflowRunApiRunsCreatePostResponse parses an HTTP response from a CreateWorkflowRunApiRunsCreatePostWithResponse call
+func ParseCreateWorkflowRunApiRunsCreatePostResponse(rsp *http.Response) (*CreateWorkflowRunApiRunsCreatePostResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateWorkflowRunApiRunsCreatePostResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CreateWorkflowRunResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetWorkflowRunsApiRunsPageGetResponse parses an HTTP response from a GetWorkflowRunsApiRunsPageGetWithResponse call
+func ParseGetWorkflowRunsApiRunsPageGetResponse(rsp *http.Response) (*GetWorkflowRunsApiRunsPageGetResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetWorkflowRunsApiRunsPageGetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ServerRoutesRunsGetPagedResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteWorkflowRunApiRunsRunIdDeleteResponse parses an HTTP response from a DeleteWorkflowRunApiRunsRunIdDeleteWithResponse call
+func ParseDeleteWorkflowRunApiRunsRunIdDeleteResponse(rsp *http.Response) (*DeleteWorkflowRunApiRunsRunIdDeleteResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteWorkflowRunApiRunsRunIdDeleteResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetWorkflowRunApiRunsRunIdGetResponse parses an HTTP response from a GetWorkflowRunApiRunsRunIdGetWithResponse call
+func ParseGetWorkflowRunApiRunsRunIdGetResponse(rsp *http.Response) (*GetWorkflowRunApiRunsRunIdGetResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetWorkflowRunApiRunsRunIdGetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkflowRunResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseValidateRunStartApiRunsRunIdStartPostResponse parses an HTTP response from a ValidateRunStartApiRunsRunIdStartPostWithResponse call
+func ParseValidateRunStartApiRunsRunIdStartPostResponse(rsp *http.Response) (*ValidateRunStartApiRunsRunIdStartPostResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ValidateRunStartApiRunsRunIdStartPostResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest StartValidationResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetRunTasksApiRunsRunIdTasksGetResponse parses an HTTP response from a GetRunTasksApiRunsRunIdTasksGetWithResponse call
+func ParseGetRunTasksApiRunsRunIdTasksGetResponse(rsp *http.Response) (*GetRunTasksApiRunsRunIdTasksGetResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRunTasksApiRunsRunIdTasksGetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RunTasksResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse parses an HTTP response from a SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutWithResponse call
+func ParseSaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse(rsp *http.Response) (*SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveRunTaskParametersApiRunsRunIdTasksNodeIdParametersPutResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SaveRunTaskParametersResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -11054,6 +13207,13 @@ func ParseSearchIoSpecsApiSearchIoSpecsGetResponse(rsp *http.Response) (*SearchI
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -11100,6 +13260,67 @@ func ParseSearchToolsApiSearchVariantsGetResponse(rsp *http.Response) (*SearchTo
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse parses an HTTP response from a SearchWorkflowReleasesApiSearchWorkflowReleasesGetWithResponse call
+func ParseSearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse(rsp *http.Response) (*SearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SearchWorkflowReleasesApiSearchWorkflowReleasesGetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkflowReleaseSearchResponseSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -11148,6 +13369,13 @@ func ParseCreateToolApiToolsCreatePostResponse(rsp *http.Response) (*CreateToolA
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -11194,6 +13422,13 @@ func ParseGetExploreToolsApiToolsExploreGetResponse(rsp *http.Response) (*GetExp
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -11242,6 +13477,13 @@ func ParseGetToolsApiToolsPageGetResponse(rsp *http.Response) (*GetToolsApiTools
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -11288,6 +13530,13 @@ func ParseGetToolApiToolsToolIdGetResponse(rsp *http.Response) (*GetToolApiTools
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -11336,6 +13585,13 @@ func ParseCreateReleaseApiToolsToolIdReleasesCreatePostResponse(rsp *http.Respon
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -11382,6 +13638,13 @@ func ParseDeleteReleaseApiToolsToolIdReleasesReleaseIdDeleteResponse(rsp *http.R
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -11430,6 +13693,67 @@ func ParseGetReleaseApiToolsToolIdReleasesReleaseIdGetResponse(rsp *http.Respons
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse parses an HTTP response from a AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostWithResponse call
+func ParseAutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse(rsp *http.Response) (*AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AutoCompileApiToolsToolIdReleasesReleaseIdAutoCompilePostResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -11476,6 +13800,13 @@ func ParseConfirmBinaryUploadApiToolsToolIdReleasesReleaseIdBinaryUploadComplete
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -11524,6 +13855,13 @@ func ParseGetBinaryUploadUrlApiToolsToolIdReleasesReleaseIdBinaryUploadUrlPostRe
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -11570,6 +13908,13 @@ func ParseCreateCommandApiToolsToolIdReleasesReleaseIdCommandsCreatePostResponse
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -11618,6 +13963,13 @@ func ParseGetCommandApiToolsToolIdReleasesReleaseIdCommandsCommandIdGetResponse(
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -11664,6 +14016,13 @@ func ParseAddIoSpecApiToolsToolIdReleasesReleaseIdCommandsCommandIdAddIoSpecPatc
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -11712,6 +14071,13 @@ func ParseCreateVariantApiToolsToolIdReleasesReleaseIdCommandsCommandIdCreateVar
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -11758,6 +14124,13 @@ func ParseSaveCommandConfigApiToolsToolIdReleasesReleaseIdCommandsCommandIdSaveC
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -11806,6 +14179,13 @@ func ParseGetVariantApiToolsToolIdReleasesReleaseIdCommandsCommandIdVariantGetRe
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -11852,6 +14232,13 @@ func ParseAddBooleanParameterApiToolsToolIdReleasesReleaseIdCommandsCommandIdVar
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -11900,6 +14287,13 @@ func ParseAddNumericParameterApiToolsToolIdReleasesReleaseIdCommandsCommandIdVar
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -11946,6 +14340,13 @@ func ParseAddPathParameterApiToolsToolIdReleasesReleaseIdCommandsCommandIdVarian
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -11994,6 +14395,13 @@ func ParseAddStringParameterApiToolsToolIdReleasesReleaseIdCommandsCommandIdVari
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -12040,6 +14448,13 @@ func ParseDeleteParameterApiToolsToolIdReleasesReleaseIdCommandsCommandIdVariant
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -12088,6 +14503,13 @@ func ParseEditVariantApiToolsToolIdReleasesReleaseIdCommandsCommandIdVariantEdit
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -12134,6 +14556,13 @@ func ParseSelectDockerImageApiToolsToolIdReleasesReleaseIdSelectDockerImagePostR
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -12182,6 +14611,13 @@ func ParseGetUserApiUsersUserIdGetResponse(rsp *http.Response) (*GetUserApiUsers
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -12228,6 +14664,13 @@ func ParseCreateWorkflowApiWorkflowsCreatePostResponse(rsp *http.Response) (*Cre
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -12276,6 +14719,13 @@ func ParseGetExploreWorkflowsApiWorkflowsExploreGetResponse(rsp *http.Response) 
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -12322,6 +14772,13 @@ func ParseGetWorkflowsApiWorkflowsPageGetResponse(rsp *http.Response) (*GetWorkf
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -12370,6 +14827,13 @@ func ParseGetWorkflowApiWorkflowsWorkflowIdGetResponse(rsp *http.Response) (*Get
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -12416,6 +14880,13 @@ func ParseCreateReleaseApiWorkflowsWorkflowIdReleasesCreatePostResponse(rsp *htt
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -12464,6 +14935,13 @@ func ParseDeleteWorkflowReleaseApiWorkflowsWorkflowIdReleasesReleaseIdDeleteResp
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -12510,6 +14988,13 @@ func ParseGetReleaseApiWorkflowsWorkflowIdReleasesReleaseIdGetResponse(rsp *http
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -12558,6 +15043,13 @@ func ParseEditWorkflowReleaseApiWorkflowsWorkflowIdReleasesReleaseIdEditPatchRes
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -12604,6 +15096,13 @@ func ParseGetGraphApiWorkflowsWorkflowIdReleasesReleaseIdGraphGetResponse(rsp *h
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -12652,6 +15151,13 @@ func ParseAddToolApiWorkflowsWorkflowIdReleasesReleaseIdNodesAddToolPostResponse
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -12698,6 +15204,13 @@ func ParseConnectNodesApiWorkflowsWorkflowIdReleasesReleaseIdNodesConnectPostRes
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
@@ -12746,6 +15259,13 @@ func ParseRemoveConnectionApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveConn
 		}
 		response.JSON404 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -12792,6 +15312,67 @@ func ParseRemoveNodeApiWorkflowsWorkflowIdReleasesReleaseIdNodesRemoveNodeDelete
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse parses an HTTP response from a SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutWithResponse call
+func ParseSaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse(rsp *http.Response) (*SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveNodeParametersApiWorkflowsWorkflowIdReleasesReleaseIdNodesNodeIdParametersPutResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SaveNodeParametersResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ErrorResponse

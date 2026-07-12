@@ -9,6 +9,7 @@ import (
 	"codeflower-runner/internal/core/engine"
 	"codeflower-runner/internal/core/storage"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -62,10 +63,20 @@ Examples:
 			params.Ref = &pullRef
 		}
 		if pullToolID != "" {
-			params.ToolId = &pullToolID
+			toolID, err := uuid.Parse(pullToolID)
+			if err != nil {
+				fmt.Printf("Error: invalid tool UUID: %v\n", err)
+				os.Exit(1)
+			}
+			params.ToolId = &toolID
 		}
 		if pullReleaseID != "" {
-			params.ReleaseId = &pullReleaseID
+			releaseID, err := uuid.Parse(pullReleaseID)
+			if err != nil {
+				fmt.Printf("Error: invalid release UUID: %v\n", err)
+				os.Exit(1)
+			}
+			params.ReleaseId = &releaseID
 		}
 
 		resp, err := clientResp.PullImageApiRegistryPullGetWithResponse(
@@ -79,12 +90,11 @@ Examples:
 		}
 
 		if resp.JSON200 == nil {
-			fmt.Printf("Error from backend: %s\n", resp.Status())
-			if resp.JSON404 != nil {
-				fmt.Printf("Detail: %v\n", resp.JSON404.Detail)
-			} else if resp.JSON422 != nil {
-				fmt.Printf("Validation Error: %v\n", resp.JSON422.Detail)
+			ref := pullRef
+			if ref == "" {
+				ref = "tool/release ID"
 			}
+			fmt.Printf("Error: %v\n", pullImageError(ref, resp))
 			os.Exit(1)
 		}
 

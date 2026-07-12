@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -73,18 +74,7 @@ func runHelpFunc(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 	if resp.JSON200 == nil {
-		status := "<nil>"
-		body := ""
-		if resp.HTTPResponse != nil {
-			status = resp.HTTPResponse.Status
-		}
-		if len(resp.Body) > 0 {
-			body = string(resp.Body)
-		}
-		fmt.Fprintf(os.Stderr, "Error getting info for %q: %s\n", ref, status)
-		if body != "" {
-			fmt.Fprintf(os.Stderr, "  Body: %s\n", body)
-		}
+		fmt.Fprintf(os.Stderr, "Error: %v\n", pullImageError(ref, resp))
 		os.Exit(1)
 	}
 
@@ -128,18 +118,7 @@ var runCmd = &cobra.Command{
 				os.Exit(1)
 			}
 			if resp.JSON200 == nil {
-				status := "<nil>"
-				body := ""
-				if resp.HTTPResponse != nil {
-					status = resp.HTTPResponse.Status
-				}
-				if len(resp.Body) > 0 {
-					body = string(resp.Body)
-				}
-				fmt.Fprintf(os.Stderr, "Error getting image ref from server: %s\n", status)
-				if body != "" {
-					fmt.Fprintf(os.Stderr, "  Body: %s\n", body)
-				}
+				fmt.Fprintf(os.Stderr, "Error: %v\n", pullImageError(runRef, resp))
 				os.Exit(1)
 			}
 
@@ -153,15 +132,23 @@ var runCmd = &cobra.Command{
 		releaseSpec := pullResp.ReleaseSpec
 
 		var selectedCommand *openapi.CommandSpecSchema
-		var selectedVariant *openapi.CommandVariantSpecSchema
 		imageArgs := args
 
 		if len(imageArgs) > 0 && !strings.HasPrefix(imageArgs[0], "-") {
 			cmdName := imageArgs[0]
-			for _, c := range releaseSpec.Commands {
-				if c.Name == cmdName {
-					selectedCommand = &c
+			for index := range releaseSpec.Commands {
+				c := &releaseSpec.Commands[index]
+				if c.Name != nil && strings.EqualFold(*c.Name, cmdName) {
+					selectedCommand = c
 					imageArgs = imageArgs[1:]
+					break
+				}
+			}
+		}
+		if selectedCommand == nil {
+			for index := range releaseSpec.Commands {
+				if releaseSpec.Commands[index].Name == nil {
+					selectedCommand = &releaseSpec.Commands[index]
 					break
 				}
 			}
@@ -175,43 +162,14 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		if len(imageArgs) > 0 && !strings.HasPrefix(imageArgs[0], "-") {
-			variantName := imageArgs[0]
-			for _, v := range selectedCommand.Variants {
-				if v.Name == variantName {
-					selectedVariant = &v
-					imageArgs = imageArgs[1:]
-					break
-				}
-			}
-		}
-
-		if selectedVariant == nil {
-			if len(selectedCommand.Variants) == 1 {
-				selectedVariant = &selectedCommand.Variants[0]
-			} else {
-				for _, v := range selectedCommand.Variants {
-					if v.Name == "default" {
-						selectedVariant = &v
-						fmt.Fprintf(os.Stderr, "Using default variant\n")
-						break
-					}
-				}
-
-				if selectedVariant == nil {
-					fmt.Fprintf(os.Stderr, "Error: Multiple variants available for command %s and none are named 'default'. Please specify one.\n", selectedCommand.Name)
-					os.Exit(1)
-				}
-			}
-		}
-
 		imageArgs = trimSeparator(imageArgs)
-		if err := validateToolArgs(selectedVariant, imageArgs); err != nil {
+		selectedVariant, err := inferVariant(selectedCommand, imageArgs)
+		if err != nil {
 			fmt.Fprintf(os.Stderr, "Tool argument error: %v\n", err)
 			os.Exit(1)
 		}
 
-		entrypoint := []string{filepath.Join("/app", selectedVariant.InvokeCmd)}
+		entrypoint := []string{toolBinaryPath(runRef)}
 		binds, validatedArgs, err := validateAndResolveMounts(selectedVariant, imageArgs)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Validation Error: %v\n", err)
@@ -248,13 +206,11 @@ var runCmd = &cobra.Command{
 			versionStr = fmt.Sprintf("%s (latest)", releaseSpec.VersionTag)
 		}
 
-		variantStr := ""
-		if selectedVariant.Name != "default" {
-			variantStr = "@" + selectedVariant.Name
-		}
+		variantStr := "@" + selectedVariant.Name
 
-		fmt.Fprintf(os.Stderr, "Executing: %s:%s %s%s\n", runRef, versionStr, selectedCommand.Name, variantStr)
-		err = containerEngine.RunContainer(cmd.Context(), imageRef, entrypoint, validatedArgs, binds)
+		fmt.Fprintf(os.Stderr, "Executing: %s:%s %s%s\n", runRef, versionStr, commandDisplayName(selectedCommand.Name), variantStr)
+		containerArgs := append(append([]string{}, selectedCommand.InvokeArgs...), validatedArgs...)
+		err = containerEngine.RunContainer(cmd.Context(), imageRef, entrypoint, containerArgs, binds)
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error running container: %v\n", err)
@@ -281,17 +237,54 @@ func trimSeparator(args []string) []string {
 func getCommandNames(cmds []openapi.CommandSpecSchema) []string {
 	names := make([]string, len(cmds))
 	for i, c := range cmds {
-		names[i] = c.Name
+		if c.Name == nil {
+			names[i] = "<root>"
+		} else {
+			names[i] = *c.Name
+		}
 	}
 	return names
+}
+
+func inferVariant(command *openapi.CommandSpecSchema, args []string) (*openapi.CommandVariantSpecSchema, error) {
+	var matches []*openapi.CommandVariantSpecSchema
+	for index := range command.Variants {
+		variant := &command.Variants[index]
+		if validateErr := validateToolArgs(variant, args); validateErr == nil {
+			matches = append(matches, variant)
+		}
+	}
+
+	switch len(matches) {
+	case 1:
+		return matches[0], nil
+	case 0:
+		return nil, fmt.Errorf("arguments do not match any variant")
+	default:
+		return nil, fmt.Errorf("arguments match multiple variants; make the parameter schemas distinct")
+	}
+}
+
+func toolBinaryPath(ref string) string {
+	toolRef := ref
+	if separator := strings.LastIndex(toolRef, "/"); separator >= 0 {
+		toolRef = toolRef[separator+1:]
+	}
+	if tagSeparator := strings.LastIndex(toolRef, ":"); tagSeparator >= 0 {
+		toolRef = toolRef[:tagSeparator]
+	}
+	toolRef = strings.ToLower(strings.ReplaceAll(toolRef, " ", "-"))
+	return filepath.Join("/app", toolRef)
 }
 
 func validateToolArgs(variant *openapi.CommandVariantSpecSchema, args []string) error {
 	toolFlags := pflag.NewFlagSet(variant.Name, pflag.ContinueOnError)
 	toolFlags.SetInterspersed(true)
 
+	var positionalParams []openapi.ParamSpecSchema
 	for _, param := range variant.Parameters {
 		if param.Prefix == nil {
+			positionalParams = append(positionalParams, param)
 			continue
 		}
 
@@ -302,11 +295,11 @@ func validateToolArgs(variant *openapi.CommandVariantSpecSchema, args []string) 
 		}
 
 		switch param.Type {
-		case openapi.Boolean:
+		case openapi.ParameterTypeBoolean:
 			toolFlags.Bool(name, false, help)
-		case openapi.Numeric:
+		case openapi.ParameterTypeNumeric:
 			toolFlags.Float64(name, 0, help)
-		case openapi.Path, openapi.String:
+		case openapi.ParameterTypePath, openapi.ParameterTypeString:
 			if param.IsArray {
 				toolFlags.StringSlice(name, nil, help)
 			} else {
@@ -321,14 +314,30 @@ func validateToolArgs(variant *openapi.CommandVariantSpecSchema, args []string) 
 		return err
 	}
 
-	for _, param := range variant.Parameters {
-		if param.IsRequired && param.Prefix != nil && !toolFlags.Changed(strings.TrimLeft(*param.Prefix, "-")) {
+	sort.SliceStable(positionalParams, func(left, right int) bool {
+		leftPosition, rightPosition := 0, 0
+		if positionalParams[left].Position != nil {
+			leftPosition = *positionalParams[left].Position
+		}
+		if positionalParams[right].Position != nil {
+			rightPosition = *positionalParams[right].Position
+		}
+		return leftPosition < rightPosition
+	})
+	positionalArgs := toolFlags.Args()
+	if len(positionalArgs) > len(positionalParams) {
+		return fmt.Errorf("unexpected positional arguments: %v", positionalArgs[len(positionalParams):])
+	}
+	for index, param := range positionalParams {
+		if param.IsRequired && index >= len(positionalArgs) {
 			return fmt.Errorf("missing required parameter: %s", param.Name)
 		}
 	}
 
-	if positional := toolFlags.Args(); len(positional) > 0 {
-		return fmt.Errorf("unexpected tool arguments: %v", positional)
+	for _, param := range variant.Parameters {
+		if param.IsRequired && param.Prefix != nil && !toolFlags.Changed(strings.TrimLeft(*param.Prefix, "-")) {
+			return fmt.Errorf("missing required parameter: %s", param.Name)
+		}
 	}
 
 	return nil
@@ -360,7 +369,7 @@ func validateAndResolveMounts(variant *openapi.CommandVariantSpecSchema, args []
 			providedParams[param.Name] = true
 			if i+1 < len(args) {
 				val := args[i+1]
-				if param.Type == openapi.Path {
+				if param.Type == openapi.ParameterTypePath {
 					absPath, _ := filepath.Abs(val)
 					subDir := "inputs"
 					if _, err := os.Stat(absPath); os.IsNotExist(err) {

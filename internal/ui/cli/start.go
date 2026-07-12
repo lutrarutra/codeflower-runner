@@ -162,7 +162,7 @@ Example:
 		// --- 4. Build tool execution list ---
 		scanner := bufio.NewScanner(os.Stdin)
 		var tools []toolExec
-		var toolNodeIDs []string                  // node ID → index in tools
+		var toolNodeIDs []string // node ID → index in tools
 		var toolNameByID []string
 
 		for _, rawItem := range graph.Nodes {
@@ -226,11 +226,11 @@ Example:
 			}
 
 			// --- 4b. Pull image to get image ref and release spec ---
-			relUUIDStr := variant.Command.ToolRelease.Id.String()
+			relUUID := variant.Command.ToolRelease.Id
 			pullResp, err := apiClient.PullImageApiRegistryPullGetWithResponse(
 				cmd.Context(),
 				&openapi.PullImageApiRegistryPullGetParams{
-					ReleaseId: &relUUIDStr,
+					ReleaseId: &relUUID,
 				},
 			)
 			if err != nil || pullResp.JSON200 == nil {
@@ -242,32 +242,32 @@ Example:
 			fmt.Fprintf(os.Stderr, "  Image: %s\n", imageRef)
 
 			// --- 4c. Find the matching command/variant in the release spec ---
-			var invokeCmd string
+			var invokeArgs []string
 			var detailedParams []openapi.ParamSpecSchema
 
 			for _, c := range releaseSpec.Commands {
-				if c.Name != variant.Command.Name {
+				if c.Name == nil || *c.Name != variant.Command.Name {
 					continue
 				}
 				for _, v := range c.Variants {
 					if v.Name == variant.Name {
-						invokeCmd = v.InvokeCmd
+						invokeArgs = c.InvokeArgs
 						detailedParams = v.Parameters
 						break
 					}
 				}
-				if invokeCmd == "" && len(c.Variants) == 1 {
-					invokeCmd = c.Variants[0].InvokeCmd
+				if invokeArgs == nil && len(c.Variants) == 1 {
+					invokeArgs = c.InvokeArgs
 					detailedParams = c.Variants[0].Parameters
 				}
 				break
 			}
 
-			if invokeCmd == "" {
-				fmt.Fprintf(os.Stderr, "  Error: could not find invoke command for %s/%s\n", toolName, variant.Name)
+			if invokeArgs == nil {
+				fmt.Fprintf(os.Stderr, "  Error: could not find command invocation for %s/%s\n", toolName, variant.Name)
 				os.Exit(1)
 			}
-			entrypoint := []string{filepath.Join("/app", invokeCmd)}
+			entrypoint := []string{filepath.Join("/app", strings.ToLower(strings.ReplaceAll(toolName, " ", "-")))}
 
 			// --- 4d. Resolve CLI arguments from parameters ---
 			runOverrides := runParamsByNode[node.Id.String()]
@@ -301,7 +301,7 @@ Example:
 				}
 				valStr := fmt.Sprintf("%v", value)
 
-				if param.Type == openapi.Path {
+				if param.Type == openapi.ParameterTypePath {
 					isOutput := prefix != "" && len(prefix) >= 3 && prefix[:3] == "--o"
 					subDir := "inputs"
 					if isOutput {
@@ -330,7 +330,7 @@ Example:
 				ImageRef:   imageRef,
 				Entrypoint: entrypoint,
 				Mounts:     mounts,
-				CLIArgs:    cliArgs,
+				CLIArgs:    append(append([]string{}, invokeArgs...), cliArgs...),
 				ToolName:   toolName,
 			})
 		}

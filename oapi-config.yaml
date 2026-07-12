@@ -1,5 +1,5 @@
-package: backend
-output: internal/backend/client.gen.go
+package: client
+output: internal/core/client/client.gen.go
 generate:
   models: true
   client: true
