@@ -13,6 +13,7 @@ import (
 	"codeflower-runner/internal/core/storage"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var (
@@ -24,6 +25,7 @@ var (
 func init() {
 	runCmd.Flags().BoolVarP(&force, "force", "f", false, "Ignore validation errors and force execution")
 	runCmd.Flags().BoolVar(&noPull, "no-pull", false, "Skip pulling the image, use local copy only")
+	runCmd.Flags().SetInterspersed(false)
 	rootCmd.AddCommand(runCmd)
 	runCmd.SetHelpFunc(runHelpFunc)
 }
@@ -90,11 +92,11 @@ func runHelpFunc(cmd *cobra.Command, args []string) {
 }
 
 var runCmd = &cobra.Command{
-	Use:   "run [ref] [command] [variant] -- [args...]",
+	Use:   "run [flags] [ref] [command] [variant] [args...]",
 	Short: "Pull (if needed) and run a tool release",
 	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		runRef = args[0]
+		runRef, args = splitRunArgs(args)
 		var pullResp *openapi.RegistryImagePullResponse
 
 		sm, err := storage.NewManager()
@@ -152,14 +154,14 @@ var runCmd = &cobra.Command{
 
 		var selectedCommand *openapi.CommandSpecSchema
 		var selectedVariant *openapi.CommandVariantSpecSchema
-		var imageArgs []string
+		imageArgs := args
 
-		if len(args) > 1 && !isSeparator(args[1]) {
-			cmdName := args[1]
+		if len(imageArgs) > 0 && !strings.HasPrefix(imageArgs[0], "-") {
+			cmdName := imageArgs[0]
 			for _, c := range releaseSpec.Commands {
 				if c.Name == cmdName {
 					selectedCommand = &c
-					args = args[1:]
+					imageArgs = imageArgs[1:]
 					break
 				}
 			}
@@ -173,12 +175,12 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		if len(args) > 1 && !isSeparator(args[1]) {
-			variantName := args[1]
+		if len(imageArgs) > 0 && !strings.HasPrefix(imageArgs[0], "-") {
+			variantName := imageArgs[0]
 			for _, v := range selectedCommand.Variants {
 				if v.Name == variantName {
 					selectedVariant = &v
-					imageArgs = args[2:]
+					imageArgs = imageArgs[1:]
 					break
 				}
 			}
@@ -187,16 +189,10 @@ var runCmd = &cobra.Command{
 		if selectedVariant == nil {
 			if len(selectedCommand.Variants) == 1 {
 				selectedVariant = &selectedCommand.Variants[0]
-				if len(args) > 1 && imageArgs == nil {
-					imageArgs = args[1:]
-				}
 			} else {
 				for _, v := range selectedCommand.Variants {
 					if v.Name == "default" {
 						selectedVariant = &v
-						if len(args) > 1 && imageArgs == nil {
-							imageArgs = args[1:]
-						}
 						fmt.Fprintf(os.Stderr, "Using default variant\n")
 						break
 					}
@@ -207,6 +203,12 @@ var runCmd = &cobra.Command{
 					os.Exit(1)
 				}
 			}
+		}
+
+		imageArgs = trimSeparator(imageArgs)
+		if err := validateToolArgs(selectedVariant, imageArgs); err != nil {
+			fmt.Fprintf(os.Stderr, "Tool argument error: %v\n", err)
+			os.Exit(1)
 		}
 
 		entrypoint := []string{filepath.Join("/app", selectedVariant.InvokeCmd)}
@@ -261,8 +263,19 @@ var runCmd = &cobra.Command{
 	},
 }
 
-func isSeparator(arg string) bool {
-	return arg == "--"
+func splitRunArgs(args []string) (string, []string) {
+	if len(args) == 0 {
+		return "", nil
+	}
+
+	return args[0], trimSeparator(args[1:])
+}
+
+func trimSeparator(args []string) []string {
+	if len(args) > 0 && args[0] == "--" {
+		return args[1:]
+	}
+	return args
 }
 
 func getCommandNames(cmds []openapi.CommandSpecSchema) []string {
@@ -271,6 +284,54 @@ func getCommandNames(cmds []openapi.CommandSpecSchema) []string {
 		names[i] = c.Name
 	}
 	return names
+}
+
+func validateToolArgs(variant *openapi.CommandVariantSpecSchema, args []string) error {
+	toolFlags := pflag.NewFlagSet(variant.Name, pflag.ContinueOnError)
+	toolFlags.SetInterspersed(true)
+
+	for _, param := range variant.Parameters {
+		if param.Prefix == nil {
+			continue
+		}
+
+		name := strings.TrimLeft(*param.Prefix, "-")
+		help := param.Name
+		if param.Description != nil {
+			help = *param.Description
+		}
+
+		switch param.Type {
+		case openapi.Boolean:
+			toolFlags.Bool(name, false, help)
+		case openapi.Numeric:
+			toolFlags.Float64(name, 0, help)
+		case openapi.Path, openapi.String:
+			if param.IsArray {
+				toolFlags.StringSlice(name, nil, help)
+			} else {
+				toolFlags.String(name, "", help)
+			}
+		default:
+			return fmt.Errorf("unsupported parameter type %q for %s", param.Type, param.Name)
+		}
+	}
+
+	if err := toolFlags.Parse(trimSeparator(args)); err != nil {
+		return err
+	}
+
+	for _, param := range variant.Parameters {
+		if param.IsRequired && param.Prefix != nil && !toolFlags.Changed(strings.TrimLeft(*param.Prefix, "-")) {
+			return fmt.Errorf("missing required parameter: %s", param.Name)
+		}
+	}
+
+	if positional := toolFlags.Args(); len(positional) > 0 {
+		return fmt.Errorf("unexpected tool arguments: %v", positional)
+	}
+
+	return nil
 }
 
 func validateAndResolveMounts(variant *openapi.CommandVariantSpecSchema, args []string) ([]string, []string, error) {
