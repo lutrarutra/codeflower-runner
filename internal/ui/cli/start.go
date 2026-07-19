@@ -408,7 +408,7 @@ Example:
 			}
 
 			fmt.Fprintf(os.Stderr, "[%s] Running container …\n", item.ToolName)
-			if err := containerEngine.RunContainer(cmd.Context(), t.ImageRef, t.Entrypoint, t.CLIArgs, t.Mounts); err != nil {
+			if err := containerEngine.RunContainer(cmd.Context(), t.ImageRef, t.Entrypoint, t.CLIArgs, t.Mounts, false); err != nil {
 				fmt.Fprintf(os.Stderr, "[%s] Error: %v\n", item.ToolName, err)
 				os.Exit(1)
 			}

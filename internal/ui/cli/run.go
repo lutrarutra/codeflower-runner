@@ -21,11 +21,13 @@ var (
 	runRef string
 	force  bool
 	noPull bool
+	keepContainer bool
 )
 
 func init() {
 	runCmd.Flags().BoolVarP(&force, "force", "f", false, "Ignore validation errors and force execution")
 	runCmd.Flags().BoolVar(&noPull, "no-pull", false, "Skip pulling the image, use local copy only")
+	runCmd.Flags().BoolVar(&keepContainer, "keep-container", false, "Keep the container after execution (do not auto-remove)")
 	runCmd.Flags().SetInterspersed(false)
 	rootCmd.AddCommand(runCmd)
 	runCmd.SetHelpFunc(runHelpFunc)
@@ -154,7 +156,10 @@ var runCmd = &cobra.Command{
 			}
 		}
 		if selectedCommand == nil {
-			if len(releaseSpec.Commands) == 1 {
+			if len(releaseSpec.Commands) == 0 {
+				fmt.Fprintf(os.Stderr, "Error: No commands available for this tool release.\n")
+				os.Exit(1)
+			} else if len(releaseSpec.Commands) == 1 {
 				selectedCommand = &releaseSpec.Commands[0]
 			} else {
 				fmt.Fprintf(os.Stderr, "Error: Multiple commands available. Please specify one: %v\n", getCommandNames(releaseSpec.Commands))
@@ -201,16 +206,16 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		versionStr := releaseSpec.VersionTag
-		if releaseSpec.IsLatest {
-			versionStr = fmt.Sprintf("%s (latest)", releaseSpec.VersionTag)
-		}
-
 		variantStr := "@" + selectedVariant.Name
 
-		fmt.Fprintf(os.Stderr, "Executing: %s:%s %s%s\n", runRef, versionStr, commandDisplayName(selectedCommand.Name), variantStr)
-		containerArgs := append(append([]string{}, selectedCommand.InvokeArgs...), validatedArgs...)
-		err = containerEngine.RunContainer(cmd.Context(), imageRef, entrypoint, containerArgs, binds)
+		fmt.Fprintf(os.Stderr, "Executing: %s %s%s\n", runRef, commandDisplayName(selectedCommand.Name), variantStr)
+		binaryName := filepath.Base(toolBinaryPath(runRef))
+		invokeArgs := selectedCommand.InvokeArgs
+		if len(invokeArgs) > 0 && strings.EqualFold(invokeArgs[0], binaryName) {
+			invokeArgs = invokeArgs[1:]
+		}
+		containerArgs := append(append([]string{}, invokeArgs...), validatedArgs...)
+		err = containerEngine.RunContainer(cmd.Context(), imageRef, entrypoint, containerArgs, binds, keepContainer)
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error running container: %v\n", err)

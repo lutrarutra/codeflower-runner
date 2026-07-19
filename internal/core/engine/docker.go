@@ -49,7 +49,7 @@ func (d *DockerEngine) ImageExists(ctx context.Context, imageRef string) (bool, 
 	return true, nil
 }
 
-func (d *DockerEngine) RunContainer(ctx context.Context, imageRef string, entrypoint []string, cmdArgs []string, binds []string) error {
+func (d *DockerEngine) RunContainer(ctx context.Context, imageRef string, entrypoint []string, cmdArgs []string, binds []string, keepContainer bool) error {
 	resp, err := d.cli.ContainerCreate(ctx, &container.Config{
 		Image:      imageRef,
 		Entrypoint: entrypoint,
@@ -62,7 +62,9 @@ func (d *DockerEngine) RunContainer(ctx context.Context, imageRef string, entryp
 		return err
 	}
 
-	defer d.cli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	if !keepContainer {
+		defer d.cli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
+	}
 
 	if err := d.cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 		return err

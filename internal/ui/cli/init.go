@@ -15,7 +15,7 @@ var initCmd = &cobra.Command{
 	Short: "Initialize the application",
 	Run: func(cmd *cobra.Command, args []string) {
 		if apiToken != "" {
-			fmt.Println("API token is already set")
+			fmt.Println("API token is already set. To replace it, run: codeflower login")
 			return
 		}
 

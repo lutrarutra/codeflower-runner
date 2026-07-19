@@ -48,7 +48,26 @@ codeflower init
 # Prompts: Enter your API token: <paste-token>
 ```
 
-Must be run before any other command.
+Must be run before any other command. If a token is already set, run
+`codeflower login` to replace it.
+
+---
+
+### `login`
+
+Replace the stored API token. Prompts for a new token (input is hidden),
+validates it against the backend, and overwrites the previously saved token
+only if authentication succeeds.
+
+```bash
+codeflower login
+# Enter your API token: ********
+# Successfully authenticated as <username>
+# Login successful! Your token has been updated.
+```
+
+Unlike `init`, `login` works even when a token is already set, so it is the
+command to use for rotating or fixing your token.
 
 ---
 
@@ -153,6 +172,7 @@ codeflower start 3b3c3b3c-3b3c-3b3c-3b3c-3b3c3b3c3b3c
 ```
 
 The command will:
+
 1. Fetch the run, workflow graph, and task parameter overrides from the API.
 2. For each tool node, prompt for any unconnected input file paths.
 3. Pull the required images and execute each container with resolved arguments.
