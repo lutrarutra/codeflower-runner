@@ -711,6 +711,7 @@ type CommandSearchSchema struct {
 // CommandSpecSchema defines model for CommandSpecSchema.
 type CommandSpecSchema struct {
 	Description *string                    `json:"description"`
+	Id          openapi_types.UUID         `json:"id"`
 	InvokeArgs  []string                   `json:"invoke_args"`
 	Name        *string                    `json:"name"`
 	Variants    []CommandVariantSpecSchema `json:"variants"`
@@ -759,6 +760,7 @@ type CommandVariantSearchSchema struct {
 
 // CommandVariantSpecSchema defines model for CommandVariantSpecSchema.
 type CommandVariantSpecSchema struct {
+	Id         openapi_types.UUID `json:"id"`
 	InvokeCmd  string            `json:"invoke_cmd"`
 	Name       string            `json:"name"`
 	Parameters []ParamSpecSchema `json:"parameters"`
@@ -1212,7 +1214,9 @@ type ToolReleaseNodeSchema struct {
 // ToolReleaseSpecSchema defines model for ToolReleaseSpecSchema.
 type ToolReleaseSpecSchema struct {
 	Commands   []CommandSpecSchema `json:"commands"`
+	Id         openapi_types.UUID  `json:"id"`
 	IsLatest   bool                `json:"is_latest"`
+	ToolId     openapi_types.UUID  `json:"tool_id"`
 	VersionTag string              `json:"version_tag"`
 }
 

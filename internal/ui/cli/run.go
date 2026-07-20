@@ -206,9 +206,34 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		variantStr := "@" + selectedVariant.Name
+		toolName := strings.TrimSuffix(runRef, ":"+releaseSpec.VersionTag)
+		cmdName := commandDisplayName(selectedCommand.Name)
 
-		fmt.Fprintf(os.Stderr, "Executing: %s %s%s\n", runRef, commandDisplayName(selectedCommand.Name), variantStr)
+		lines := []string{
+			fmt.Sprintf("  Tool:    %-32s [%s]", toolName, releaseSpec.ToolId),
+			fmt.Sprintf("  Release: %-32s [%s]", releaseSpec.VersionTag, releaseSpec.Id),
+			fmt.Sprintf("  Command: %-32s [%s]", cmdName, selectedCommand.Id),
+			fmt.Sprintf("  Variant: %-32s [%s]", selectedVariant.Name, selectedVariant.Id),
+		}
+
+		maxW := 0
+		for _, l := range lines {
+			if len(l) > maxW {
+				maxW = len(l)
+			}
+		}
+
+		padLFmt := func(s string) string {
+			return fmt.Sprintf("│ %-*s │", maxW, s)
+		}
+
+		fmt.Fprintf(os.Stderr, "Executing:\n")
+		fmt.Fprintf(os.Stderr, "┌%s┐\n", strings.Repeat("─", maxW+2))
+		for _, l := range lines {
+			_, _ = fmt.Fprintln(os.Stderr, padLFmt(l))
+		}
+		fmt.Fprintf(os.Stderr, "└%s┘\n", strings.Repeat("─", maxW+2))
+
 		binaryName := filepath.Base(toolBinaryPath(runRef))
 		invokeArgs := selectedCommand.InvokeArgs
 		if len(invokeArgs) > 0 && strings.EqualFold(invokeArgs[0], binaryName) {
